@@ -7,6 +7,9 @@
 | **کامل** (پوشه اصلی) | Next.js 16 + PostgreSQL + Drizzle ORM | سرور VPS / Vercel / هر هاست Node.js |
 | **PHP** (پوشه `php/`) | PHP 7.4+ + MySQL | هاست اشتراکی، cPanel، XAMPP |
 
+## 🎨 قالب
+قالب پیش‌فرض همان **قالب مرجع** (سرمه‌ای `#1b3a6b` + صورتی `#e91e63` + طلایی) است و بعد از اجرای `seed-all` دقیقاً مثل پیش‌نمایش نمایش داده می‌شود. از پنل «مدیریت قالب و پوسته» قابل تغییر است.
+
 ## ⬇️ دانلود سریع
 - **کل پروژه:** دکمه سبز **Code → Download ZIP** در بالای همین صفحه
 - **فقط نسخه PHP:** [`public/downloads/minimoda-php.zip`](public/downloads/minimoda-php.zip)
@@ -33,11 +36,8 @@ cp .env.example .env
 # ۳) ساخت جداول
 npx drizzle-kit push
 
-# ۴) درج داده‌های نمونه
-npx tsx src/db/seed.ts
-npx tsx src/db/seed-theme.ts
-npx tsx src/db/seed-admin-extras.ts
-npx tsx src/db/seed-completion.ts
+# ۴) درج داده‌های نمونه + تنظیمات قالب مرجع (یک دستور)
+npx tsx src/db/seed-all.ts
 
 # ۵) اجرا
 npm run dev                  # توسعه — http://localhost:3000
