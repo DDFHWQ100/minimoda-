@@ -1,0 +1,123 @@
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
+import "./globals.css";
+import { StoreProvider } from "@/components/store-provider";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import DemoBar from "@/components/demo-bar";
+import { Baby, Wrench, LogIn, Phone, Mail } from "lucide-react";
+import { getSessionUser, isAdminDemoOpen } from "@/lib/auth";
+import { getThemeBundle, themeCssVariables, fontLinkFor, settingBool } from "@/lib/theme";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const bundle = await getThemeBundle().catch(() => null);
+  const s = bundle?.settings ?? {};
+  const storeName = s["store.name"] ?? "مینی‌مودا";
+  const suffix = s["seo.title_suffix"] ?? `| ${storeName}`;
+  return {
+    metadataBase: new URL("http://localhost:3000"),
+    title: {
+      default: `${storeName} | فروشگاه آنلاین مد و پوشاک کودک و نوزاد`,
+      template: `%s ${suffix}`,
+    },
+    description: "خرید آنلاین لباس مجلسی، کاپشن، کت و شلوار، کفش و اکسسوری کودک و نوزاد با ضمانت اصالت، بهترین قیمت و ارسال سریع به سراسر ایران.",
+    keywords: ["لباس کودک", "پوشاک بچه گانه", "لباس نوزاد", "لباس مجلسی کودک", "کاپشن بچه گانه", "کفش کودک", "مینی مودا"],
+    openGraph: {
+      title: `${storeName} | مد و پوشاک کودک و نوزاد`,
+      description: "بهترین کالکشن‌های لباس کودک با ارسال رایگان بالای ۲ میلیون تومان",
+      type: "website",
+      locale: "fa_IR",
+      images: [{ url: s["seo.og_image"] ?? "/images/hero-royal-junior.jpg", width: 1600, height: 900, alt: storeName }],
+    },
+  };
+}
+
+export const viewport: Viewport = {
+  themeColor: "#14264a",
+  width: "device-width",
+  initialScale: 1,
+};
+
+function MaintenanceScreen({ message, storeName }: { message: string; storeName: string }) {
+  return (
+    <html lang="fa" dir="rtl">
+      <head>
+        <meta httpEquiv="refresh" content="30" />
+        <title>{storeName} | در حال به‌روزرسانی</title>
+        <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet" />
+      </head>
+      <body className="min-h-screen bg-[#0e1c36] text-white flex items-center justify-center p-6" style={{ fontFamily: "Vazirmatn, Tahoma, sans-serif" }}>
+        <div className="max-w-lg text-center">
+          <div className="mx-auto h-24 w-24 rounded-3xl bg-gradient-to-br from-amber-300 to-orange-400 grid place-items-center shadow-2xl shadow-amber-500/20 animate-pulse">
+            <Wrench className="h-12 w-12 text-[#14264a]" strokeWidth={2} />
+          </div>
+          <h1 className="mt-6 text-2xl sm:text-3xl font-black">{storeName} در حال به‌روزرسانی است</h1>
+          <p className="mt-3 text-white/75 leading-7 text-sm">{message}</p>
+          <div className="mt-5 flex items-center justify-center gap-4 text-[11px] text-white/50">
+            <a href="tel:02188766554" dir="ltr" className="flex items-center gap-1.5 hover:text-amber-300 transition"><Phone className="h-4 w-4" /> 021-88766554</a>
+            <a href="mailto:support@minimoda.ir" dir="ltr" className="flex items-center gap-1.5 hover:text-amber-300 transition"><Mail className="h-4 w-4" /> support@minimoda.ir</a>
+          </div>
+          <a href="/login" className="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-400/40 text-amber-300 px-5 h-11 text-[12px] font-bold hover:bg-amber-400/10 transition"><LogIn className="h-4 w-4" /> ورود مدیران سایت</a>
+          <p className="mt-4 text-[10px] text-white/30">این صفحه هر ۳۰ ثانیه به‌صورت خودکار تازه می‌شود.</p>
+        </div>
+      </body>
+    </html>
+  );
+}
+
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const user = await getSessionUser();
+  const demoOpen = isAdminDemoOpen();
+  const bundle = await getThemeBundle().catch(() => null);
+  const s = bundle?.settings ?? {};
+  const storeName = s["store.name"] ?? "مینی‌مودا";
+  const tagline = s["store.tagline"] ?? "مد و پوشاک کودک و نوزاد";
+
+  // ─── حالت تعمیر: برای غیرمدیران فقط صفحه تعمیر ───
+  if (s["maintenance.enabled"] === "true" && user?.role !== "admin") {
+    return <MaintenanceScreen message={s["maintenance.message"] ?? "سایت در حال به‌روزرسانی است."} storeName={storeName} />;
+  }
+
+  const varsCss = themeCssVariables(s);
+  const announcementOn = settingBool(s, "announcement.enabled", true) && (s["announcement.text"] ?? "") !== "";
+  const announcementTone = s["announcement.tone"] ?? "gold";
+  const announcementCls =
+    announcementTone === "pink"
+      ? "bg-pink-600 text-white"
+      : announcementTone === "navy"
+        ? "bg-[#14264a] text-amber-300"
+        : "bg-amber-300 text-amber-950";
+
+  return (
+    <html lang="fa" dir="rtl">
+      <head>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%2314264a%22/><text x=%2250%22 y=%2272%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23f2b33d%22 font-family=%22Tahoma%22 font-weight=%22bold%22>M</text></svg>" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={fontLinkFor(s["theme.font"])} rel="stylesheet" />
+        {/* توکن‌های پوسته (تزریق از Theme Engine) */}
+        <style id="theme-vars" dangerouslySetInnerHTML={{ __html: varsCss }} />
+        {/* CSS سفارشی — قلب شخصی‌سازی پوسته */}
+        {s["custom.css"] && <style id="custom-css" dangerouslySetInnerHTML={{ __html: s["custom.css"] }} />}
+      </head>
+      <body className="bg-[#f3f4f8] text-slate-800 antialiased">
+        {/* نوار اطلاع‌رسانی — قابل مدیریت از پنل قالب */}
+        {announcementOn && (
+          <div className={`relative z-[70] text-center text-[10px] sm:text-[11px] font-bold leading-8 px-4 truncate ${announcementCls}`}>
+            {s["announcement.text"]}
+          </div>
+        )}
+        {/* کدهای Head سفارشی (متاتگ‌ها، وریفیکیشن‌ها) — تزریق خام */}
+        {s["custom.head"] && <div id="custom-head" style={{ display: "none" }} dangerouslySetInnerHTML={{ __html: s["custom.head"] }} />}
+        <StoreProvider>
+          <DemoBar />
+          <Header userName={user?.name ?? null} isAdmin={user?.role === "admin" || demoOpen} />
+          <main>{children}</main>
+          <Footer storeName={storeName} tagline={tagline} />
+        </StoreProvider>
+        {/* JavaScript سفارشی — تزریق در پایان body */}
+        {s["custom.js"] && <script id="custom-js" dangerouslySetInnerHTML={{ __html: s["custom.js"] }} />}
+      </body>
+    </html>
+  );
+}

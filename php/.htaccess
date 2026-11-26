@@ -1,0 +1,15 @@
+# ══════════════════════════════════════════════
+# MiniModa — امنیت سبک و سازگار با همه سرورها
+# (هیچ خطای 500 نمی‌دهد؛ فقط دسترسی مستقیم به فایل‌های حساس را می‌بندد)
+# ══════════════════════════════════════════════
+
+# فایل‌های حساس از مرورگر قابل دسترسی نباشند
+<FilesMatch "\.(sql|md|log|ini|sh|cjs)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
