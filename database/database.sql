@@ -6,6 +6,16 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- اگر قبلاً ایمپورت شده، جداول قدیمی حذف می‌شوند تا ایمپورت مجدد خطای Duplicate ندهد
+DROP TABLE IF EXISTS newsletter_subscribers;
+DROP TABLE IF EXISTS blog_posts;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
+
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
