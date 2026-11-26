@@ -2,10 +2,10 @@
 
 /* توکن‌های پوسته — در زمان اجرا توسط Theme Engine بازنویسی می‌شوند */
 :root {
-  --brand-primary: #14264a;
-  --brand-accent: #db2777;
-  --brand-gold: #f2b33d;
-  --brand-radius: 18px;
+  --brand-primary: #1b3a6b;
+  --brand-accent: #e91e63;
+  --brand-gold: #ffc107;
+  --brand-radius: 20px;
 }
 
 @theme {

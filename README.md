@@ -94,3 +94,13 @@ npm run build && npm start   # تولید
 
 ## 🔒 امنیت
 رمزها هش‌شده (scrypt/bcrypt) · CSRF · اعتبارسنجی سمت سرور · Prepared Statements · کنترل دسترسی مدیر · Audit Log · اسکن فایل‌های آپلودی
+
+## آپدیت: نصب با دیتابیس کامل (یسان با پیش‌نمایش زنده)
+
+فایل `database/full-backup.sql` نسخهٔ کامل دیتابیس فعلی است (اسکیما + تمام داده‌ها + تنظیمات قالب مثل رنگ‌ها `#1b3a6b/#e91e63/#ffc107`، نوار اطلاع‌رسان و ردیف‌های دسته‌بندی). برای این‌که نصب شما دقیقاً مثل پیش‌نمایش دیده شود:
+
+```bash
+psql postgresql://USER:PASS@localhost:5432/minimoda < database/full-backup.sql
+```
+
+(یا در pgAdmin / phpMyAdmin به‌عنوان فایل SQL import کنید.)

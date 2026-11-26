@@ -161,7 +161,7 @@ export function themeCssVariables(settings: ThemeSettingsMap): string {
   const primary = settings["theme.primary"] ?? "#14264a";
   const accent = settings["theme.accent"] ?? "#db2777";
   const gold = settings["theme.gold"] ?? "#f2b33d";
-  const radius = Number(settings["theme.radius"] ?? "18") || 18;
+  const radius = Number(settings["theme.radius"] ?? "20") || 18;
   const font = settings["theme.font"] ?? "Vazirmatn";
   return `:root{--brand-primary:${primary};--brand-accent:${accent};--brand-gold:${gold};--brand-radius:${radius}px}`
     + `body{font-family:'${font}',Tahoma,'Segoe UI',sans-serif}`;
