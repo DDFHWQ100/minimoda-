@@ -158,10 +158,10 @@ export function validateCustomCss(css: string): { ok: boolean; error?: string } 
 
 /** ساخت بلوک CSS متغیرها از توکن‌های فعال */
 export function themeCssVariables(settings: ThemeSettingsMap): string {
-  const primary = settings["theme.primary"] ?? "#14264a";
-  const accent = settings["theme.accent"] ?? "#db2777";
-  const gold = settings["theme.gold"] ?? "#f2b33d";
-  const radius = Number(settings["theme.radius"] ?? "20") || 18;
+  const primary = settings["theme.primary"] ?? "#1b3a6b";
+  const accent = settings["theme.accent"] ?? "#e91e63";
+  const gold = settings["theme.gold"] ?? "#ffc107";
+  const radius = Number(settings["theme.radius"] ?? "20") || 20;
   const font = settings["theme.font"] ?? "Vazirmatn";
   return `:root{--brand-primary:${primary};--brand-accent:${accent};--brand-gold:${gold};--brand-radius:${radius}px}`
     + `body{font-family:'${font}',Tahoma,'Segoe UI',sans-serif}`;
