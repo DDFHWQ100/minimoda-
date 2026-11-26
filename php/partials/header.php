@@ -1,11 +1,11 @@
 <?php
-// partials/header.php — سربرگ قالب مرجع MiniModa (طراحی رفرنس)
-if (!isset($pageTitle) || $pageTitle === '') { $pageTitle = 'مینی‌مودا | فروشگاه آنلاین مد و پوشاک کودک و نوزاد'; }
+// partials/header.php — سربرگ مشترک همه صفحات (قالب مرجع)
+if (!isset($pageTitle) || $pageTitle === '') { $pageTitle = 'مینی‌مودا | فروشگاه آنلاین مد و پوشاک کودک و نوجوان'; }
 $currentUser = currentUser();
 $cartN = cartCount();
 $cartTotalsCache = $cartN > 0 ? cartTotals() : ['total' => 0];
 $nav = [
-    ['label' => 'خانه', 'href' => 'index.php', 'icon' => 'home'],
+    ['label' => 'خانه', 'href' => 'index.php', 'home' => true],
     ['label' => 'بچگانه', 'href' => 'products.php?cat=kids'],
     ['label' => 'کودکان', 'href' => 'products.php?cat=boys'],
     ['label' => 'نوزاد', 'href' => 'products.php?cat=baby'],
@@ -20,13 +20,11 @@ $nav = [
         ['label' => 'لباس روزمره', 'href' => 'products.php?cat=girls'],
     ]],
     ['label' => 'لباس مجلسی', 'href' => 'products.php?cat=formal'],
+    ['label' => 'کفش', 'href' => 'products.php?cat=shoes'],
     ['label' => 'تماس با ما', 'href' => 'help.php#contact'],
 ];
 $activeCat = $_GET['cat'] ?? '';
-function navIcon(string $name): string {
-    if ($name === 'home') { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>'; }
-    return '';
-}
+$isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -35,7 +33,7 @@ function navIcon(string $name): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#1b3a6b">
 <title><?= e($pageTitle) ?></title>
-<meta name="description" content="خرید آنلاین جدیدترین لباس کودک و نوجوان با ارسال رایگان و ضمانت بازگشت کالا">
+<meta name="description" content="خرید آنلاین لباس کودک و نوجوان با ضمانت اصالت کالا، بهترین قیمت و ارسال سریع به سراسر ایران">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%231b3a6b%22/><text x=%2250%22 y=%2272%22 font-size=%2252%22 text-anchor=%22middle%22 fill=%22%23ffc107%22 font-family=%22Tahoma%22 font-weight=%22bold%22>M</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,11 +42,17 @@ function navIcon(string $name): string {
 </head>
 <body>
 
-<!-- نوار اطلاع‌رسانی سرمه‌ای -->
+<!-- نوار بالایی سرمه‌ای -->
 <div class="topbar">
   <div class="wrap topbar-in">
-    <span class="topbar-highlight">تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی</span>
-    <span class="topbar-side"><a href="help.php#contact">پشتیبانی مشتریان</a><span class="sep">|</span><a href="help.php#faq">سوالات متداول</a><span class="sep">|</span><a href="help.php#contact">تماس با ما</a></span>
+    <span class="topbar-highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 8h4l4 4v5a1 1 0 0 1-1 1h-2"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg> تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی</span>
+    <span class="topbar-side">
+      <a href="help.php#contact">پشتیبانی مشتریان</a>
+      <span class="sep">|</span>
+      <a href="help.php#faq">سوالات متداول</a>
+      <span class="sep">|</span>
+      <a href="help.php#contact">تماس با ما</a>
+    </span>
   </div>
 </div>
 
@@ -58,7 +62,7 @@ function navIcon(string $name): string {
     <button class="burger" id="navToggle" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
 
     <a class="logo" href="index.php">
-      <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#1b3a6b" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 4l9 6.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5z"/><path d="M9 21v-6h6v6"/></svg></span>
+      <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#1b3a6b" stroke-width="2.2" stroke-linejoin="round"><path d="M3 8l4.5 4L12 4l4.5 8L21 8l-1.8 11H4.8L3 8z"/></svg></span>
       <span class="logo-text"><b>Mini<em>Moda</em></b><small>Kids &amp; Teens Fashion</small></span>
     </a>
 
@@ -73,19 +77,18 @@ function navIcon(string $name): string {
       <?php if ($currentUser): ?>
         <a class="hicon" href="account.php" title="حساب من"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg><small>حساب من</small></a>
       <?php else: ?>
-        <a class="hicon" href="auth.php?action=login" title="ورود"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg><small>ورود</small></a>
+        <a class="hicon" href="auth.php?action=login" title="ورود"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg><small>ورود / ثبت‌نام</small></a>
       <?php endif; ?>
     </nav>
   </div>
 
-  <!-- منوی کپسولی -->
+  <!-- منوی ناوبری کپسولی -->
   <nav class="mainnav" id="mainnav">
     <div class="wrap mainnav-in">
-      <?php foreach ($nav as $item): ?>
-        <?php $isActive = $item['href'] === 'index.php'; ?>
-        <?php if (($item['href'] === $_SERVER['REQUEST_URI']) || ($item['href'] === 'index.php' && basename($_SERVER['PHP_SELF']) === 'index.php')) { $isActive = true; } ?>
+      <?php foreach ($nav as $i => $item): ?>
+        <?php $isActive = (!empty($item['home']) && $isHome && $activeCat === '') || ($activeCat !== '' && strpos($item['href'], 'cat=' . $activeCat) !== false); ?>
         <div class="nav-item<?= $isActive ? ' active' : '' ?>">
-          <a href="<?= e($item['href']) ?>"><?= navIcon($item['icon'] ?? '') ?><?= e($item['label']) ?><?php if (!empty($item['sub'])): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg><?php endif; ?></a>
+          <a href="<?= e($item['href']) ?>"><?php if (!empty($item['home'])): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><?php endif; ?><?= e($item['label']) ?><?php if (!empty($item['sub'])): ?><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg><?php endif; ?></a>
           <?php if (!empty($item['sub'])): ?>
             <div class="dropdown"><?php foreach ($item['sub'] as $sub): ?><a href="<?= e($sub['href']) ?>"><?= e($sub['label']) ?></a><?php endforeach; ?></div>
           <?php endif; ?>
