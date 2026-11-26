@@ -3,6 +3,7 @@ import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { revisions } from "@/db/schema";
 import ActionButton from "@/components/theme/action-button";
+import CompareRevisions from "@/components/theme/compare-revisions";
 import { faDate, toFaDigits } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export default async function RevisionsPage() {
         <ActionButton action="createRevision" promptLabel="برچسب این نسخه پشتیبان:" promptPlaceholder="مثلاً: قبل از کمپین نوروز" label="تهیه پشتیبان جدید" icon={<ArchiveRestore className="h-5 w-5" />} className="inline-flex items-center gap-2 rounded-2xl bg-pink-600 text-white px-5 h-12 text-[12px] font-black hover:bg-pink-500 transition shadow-lg shadow-pink-600/20" />
       </div>
 
+      {all.length >= 2 && <CompareRevisions revisions={all.map((r) => ({ id: r.id, label: r.label }))} />}
       {all.length === 0 ? (
         <div className="mt-6 rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <FileJson className="h-12 w-12 text-slate-300 mx-auto" strokeWidth={1.4} />

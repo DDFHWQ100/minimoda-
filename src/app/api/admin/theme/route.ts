@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, lt, sql } from "drizzle-orm";
+// inArray برای diff نسخه‌ها استفاده می‌شود
 import { db } from "@/db";
 import {
   themeSettings,
@@ -31,11 +32,47 @@ async function requireAdmin() {
 const demoGuard = () =>
   NextResponse.json({ error: "حالت نمایش عمومی: برای ذخیره تغییرات ابتدا «ورود یک‌کلیکی مدیر» را بزنید." }, { status: 403 });
 
+const str = (v: unknown, max = 500) => String(v ?? "").trim().slice(0, max);
+
 export async function GET(req: Request) {
   const admin = await requireAdmin();
   if (!admin) return demoGuard();
   const url = new URL(req.url);
   const action = url.searchParams.get("action");
+
+  if (action === "diff") {
+    const id1 = Number(url.searchParams.get("id1"));
+    const id2 = Number(url.searchParams.get("id2"));
+    const rows = await db.select().from(revisions).where(inArray(revisions.id, [id1, id2]));
+    if (rows.length !== 2) return NextResponse.json({ error: "دو نسخه انتخاب کنید." }, { status: 400 });
+    const parse = (s: string) => { try { return JSON.parse(s); } catch { return null; } };
+    const a = parse(rows.find((r) => r.id === id1)!.snapshot), b = parse(rows.find((r) => r.id === id2)!.snapshot);
+    if (!a || !b) return NextResponse.json({ error: "فایل پشتیبان خراب است." }, { status: 400 });
+    const diffs: string[] = [];
+    const aSettings = new Map<string, string>((a.settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    const bSettings = new Map<string, string>((b.settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value]));
+    for (const [k, v] of aSettings) {
+      if (!bSettings.has(k)) diffs.push(`تنظیم «${k}»: فقط در نسخه #${id1} — مقدار: ${v}`);
+      else if (bSettings.get(k) !== v) diffs.push(`تنظیم «${k}»: ${v} → ${bSettings.get(k)}`);
+    }
+    for (const [k, v] of bSettings) {
+      if (!aSettings.has(k)) diffs.push(`تنظیم «${k}»: فقط در نسخه #${id2} — مقدار: ${v}`);
+    }
+    const aSections = new Map<string, boolean>((a.sections ?? []).map((s: { id: string; enabled: boolean }) => [s.id, s.enabled]));
+    const bSections = new Map<string, boolean>((b.sections ?? []).map((s: { id: string; enabled: boolean }) => [s.id, s.enabled]));
+    for (const [k, v] of aSections) {
+      if (bSections.get(k) !== v) diffs.push(`بخش «${k}»: ${v ? "نمایش" : "مخفی"} → ${bSections.get(k) ? "نمایش" : "مخفی"}`);
+    }
+    const aBanners = new Map<number, Record<string, unknown>>((a.banners ?? []).map((bn: Record<string, unknown>, i: number) => [i, bn]));
+    const bBanners = new Map<number, Record<string, unknown>>((b.banners ?? []).map((bn: Record<string, unknown>, i: number) => [i, bn]));
+    if ((a.banners ?? []).length !== (b.banners ?? []).length) diffs.push(`تعداد بنرها: ${a.banners?.length ?? 0} → ${b.banners?.length ?? 0}`);
+    if (aBanners.size === bBanners.size) {
+      for (const [i, bn] of aBanners) {
+        if (JSON.stringify(bn) !== JSON.stringify(bBanners.get(i))) diffs.push(`بنر شماره ${i + 1} تغییر کرده است`);
+      }
+    }
+    return NextResponse.json({ ok: true, diffs, count: diffs.length });
+  }
 
   if (action === "revisionDownload") {
     const id = Number(url.searchParams.get("id"));
@@ -89,6 +126,51 @@ export async function POST(req: Request) {
         await setThemeSettings(entries, actor);
         await logActivity(actor, "فعال‌سازی قالب", `قالب «${theme.name}» نسخه ${theme.version} فعال شد`);
         return NextResponse.json({ ok: true });
+      }
+
+      case "createTheme": {
+        const name = String(body.name ?? "").trim();
+        if (name.length < 3) return NextResponse.json({ error: "نام قالب باید حداقل ۳ کاراکتر باشد." }, { status: 400 });
+        const slug = String(body.slug ?? "").toLowerCase().trim().replace(/[^a-z0-9-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || `theme-${Date.now().toString(36)}`;
+        const dup = await db.select({ id: themes.id }).from(themes).where(eq(themes.slug, slug)).limit(1);
+        if (dup.length > 0) return NextResponse.json({ error: "این اسلاگ قبلاً استفاده شده است." }, { status: 409 });
+        const version = str(body.version, 20) || "1.0.0";
+        const author = str(body.author, 80) || actor;
+        const description = str(body.description, 500);
+        const preview = str(body.preview, 500);
+        const tokens = JSON.stringify({
+          primary: str(body.primary, 20) || "#1b3a6b",
+          accent: str(body.accent, 20) || "#e91e63",
+          gold: str(body.gold, 20) || "#ffc107",
+          font: str(body.font, 40) || "Vazirmatn",
+          radius: str(body.radius, 10) || "20",
+        });
+        await db.insert(themes).values({ name, slug, description, author, version, preview, isActive: false, isDefault: false, tokens });
+        await logActivity(actor, "افزودن قالب", `قالب «${name}» (v${version}) نصب شد`);
+        return NextResponse.json({ ok: true, slug });
+      }
+
+      case "createChildTheme": {
+        const slug = String(body.slug ?? "");
+        const rows = await db.select().from(themes).where(eq(themes.slug, slug)).limit(1);
+        const parent = rows[0];
+        if (!parent) return NextResponse.json({ error: "قالب والد یافت نشد." }, { status: 404 });
+        const name = String(body.name ?? `${parent.name} (فرزند)`).trim() || `${parent.name} (فرزند)`;
+        const newSlug = `${slug}-child-${Date.now().toString(36)}`;
+        const tokens = JSON.parse(parent.tokens || "{}");
+        if (body.primary) tokens.primary = str(body.primary, 20);
+        if (body.accent) tokens.accent = str(body.accent, 20);
+        await db.insert(themes).values({
+          name, slug: newSlug,
+          description: `قالب فرزندِ «${parent.name}» — توکن‌های طراحی از والد به ارث می‌برد و فقط رنگ‌های مشخص‌شده تغییر کرده‌اند.`,
+          author: actor,
+          version: parent.version,
+          preview: parent.preview,
+          isActive: false, isDefault: false,
+          tokens: JSON.stringify(tokens),
+        });
+        await logActivity(actor, "ساخت قالب فرزند", `فرزند «${name}» از والد «${parent.name}» ساخته شد`);
+        return NextResponse.json({ ok: true, slug: newSlug });
       }
 
       case "duplicateTheme": {

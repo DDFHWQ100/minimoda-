@@ -21,10 +21,20 @@ $sorts = [
 ];
 if (!isset($sorts[$sort])) { $sort = 'sales'; }
 
-$cats = $pdo->query('SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS cnt FROM categories c ORDER BY c.sort_order ASC')->fetchAll();
+// نرمال‌سازی کامل: $cats و $activeCat همیشه آرایه‌ی انجمنی هستند
+try {
+    $cats = $pdo->query('SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS cnt FROM categories c ORDER BY c.sort_order ASC')->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $ex) {
+    $cats = [];
+}
+if (!is_array($cats)) { $cats = []; }
+$cats = array_filter($cats, 'is_array');
+
 $activeCat = null;
 if ($cat !== '') {
-    foreach ($cats as $c) { if ($c['slug'] === $cat) { $activeCat = $c; break; } }
+    foreach ($cats as $c) {
+        if (is_array($c) && isset($c['slug']) && $c['slug'] === $cat) { $activeCat = $c; break; }
+    }
 }
 
 $where = [];
@@ -70,7 +80,7 @@ include __DIR__ . '/partials/header.php';
 ?>
 
 <div class="wrap">
-  <nav class="breadcrumb"><a href="index.php">خانه</a><span>‹</span><a href="products.php">محصولات</a><?php if ($activeCat): ?><span>‹</span><b><?= e($activeCat['name']) ?></b><?php endif; ?><?php if ($q !== ''): ?><span>‹</span><b>«<?= e($q) ?>»</b><?php endif; ?></nav>
+  <nav class="breadcrumb"><a href="index.php">خانه</a><span>‹</span><a href="products.php">محصولات</a><?php if (is_array($activeCat) && !empty($activeCat['name'])): ?><span>‹</span><b><?= e($activeCat['name']) ?></b><?php endif; ?><?php if ($q !== ''): ?><span>‹</span><b>«<?= e($q) ?>»</b><?php endif; ?></nav>
 
   <div style="display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
 

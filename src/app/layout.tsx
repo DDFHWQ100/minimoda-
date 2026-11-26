@@ -5,7 +5,11 @@ import { StoreProvider } from "@/components/store-provider";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import DemoBar from "@/components/demo-bar";
-import { Baby, Wrench, LogIn, Phone, Mail } from "lucide-react";
+import { Baby, Wrench, LogIn, Phone, Mail, Eye, X } from "lucide-react";
+import { cookies } from "next/headers";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { themes } from "@/db/schema";
 import { getSessionUser, isAdminDemoOpen } from "@/lib/auth";
 import { getThemeBundle, themeCssVariables, fontLinkFor, settingBool } from "@/lib/theme";
 
@@ -69,9 +73,32 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const user = await getSessionUser();
   const demoOpen = isAdminDemoOpen();
   const bundle = await getThemeBundle().catch(() => null);
-  const s = bundle?.settings ?? {};
+  const s = { ...(bundle?.settings ?? {}) };
   const storeName = s["store.name"] ?? "مینی‌مودا";
   const tagline = s["store.tagline"] ?? "مد و پوشاک کودک و نوزاد";
+
+  // ─── پیش‌نمایش زنده قالب (فقط برای مدیر) ───
+  let previewTheme: { name: string; slug: string } | null = null;
+  if (user?.role === "admin") {
+    try {
+      const store = await cookies();
+      const previewSlug = store.get("mm_preview_theme")?.value;
+      if (previewSlug) {
+        const rows = await db.select().from(themes).where(eq(themes.slug, previewSlug)).limit(1);
+        const theme = rows[0];
+        if (theme) {
+          previewTheme = { name: theme.name, slug: theme.slug };
+          let tokens: Record<string, string> = {};
+          try { tokens = JSON.parse(theme.tokens || "{}"); } catch { tokens = {}; }
+          if (tokens.primary) s["theme.primary"] = tokens.primary;
+          if (tokens.accent) s["theme.accent"] = tokens.accent;
+          if (tokens.gold) s["theme.gold"] = tokens.gold;
+          if (tokens.font) s["theme.font"] = tokens.font;
+          if (tokens.radius) s["theme.radius"] = String(tokens.radius);
+        }
+      }
+    } catch { /* preview optional */ }
+  }
 
   // ─── حالت تعمیر: برای غیرمدیران فقط صفحه تعمیر ───
   if (s["maintenance.enabled"] === "true" && user?.role !== "admin") {
@@ -109,6 +136,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         )}
         {/* کدهای Head سفارشی (متاتگ‌ها، وریفیکیشن‌ها) — تزریق خام */}
         {s["custom.head"] && <div id="custom-head" style={{ display: "none" }} dangerouslySetInnerHTML={{ __html: s["custom.head"] }} />}
+        {/* بنر پیش‌نمایش زنده قالب */}
+        {previewTheme && (
+          <div className="relative z-[70] bg-violet-700 text-white text-[10px] sm:text-[11px] font-bold px-4 h-9 flex items-center justify-center gap-2 flex-wrap">
+            <Eye className="h-4 w-4" />
+            پیش‌نمایش زنده قالب «{previewTheme.name}» — این قالب هنوز فعال نشده است
+            <a href={`/api/admin/theme/preview?slug=${previewTheme.slug}&action=stop`} className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 hover:bg-white/25 transition"><X className="h-3.5 w-3.5" /> خروج از پیش‌نمایش</a>
+            <a href={`/admin/theme/themes`} className="rounded-full bg-amber-400 text-[#1b3a6b] px-2 py-0.5 hover:bg-amber-300 transition">فعال‌سازی این قالب</a>
+          </div>
+        )}
         <StoreProvider>
           <DemoBar />
           <Header userName={user?.name ?? null} isAdmin={user?.role === "admin" || demoOpen} />

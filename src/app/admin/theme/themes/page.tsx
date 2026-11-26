@@ -1,9 +1,11 @@
+import Link from "next/link";
 import Image from "next/image";
-import { LayoutTemplate, CheckCircle2, Copy, Trash2, BadgeCheck, Power, ShieldCheck, CalendarDays, History } from "lucide-react";
+import { LayoutTemplate, CheckCircle2, Copy, Trash2, BadgeCheck, Power, ShieldCheck, CalendarDays, History, PlusCircle, GitBranch, Eye, FileArchive } from "lucide-react";
 import { db } from "@/db";
 import { themes } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import ActionButton from "@/components/theme/action-button";
+import ThemeZipUpload from "@/components/theme/theme-zip-upload";
 import { faDay, toFaDigits } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -28,15 +30,10 @@ export default async function ThemesPage() {
           <h1 className="text-xl sm:text-2xl font-black text-[#14264a] flex items-center gap-2"><LayoutTemplate className="h-6 w-6 text-pink-600" /> مدیریت قالب‌ها</h1>
           <p className="text-[11px] text-slate-500 mt-0.5">قالب فعال کل سایت را از همین‌جا عوض کنید — نسخه، سازنده، تاریخ نصب و پیش‌نمایش هر قالب مشخص است.</p>
         </div>
-        <ActionButton
-          action="createRevision"
-          payload={{ label: "پشتیبان قبل از تغییر قالب" }}
-          promptLabel="برچسب پشتیبان را وارد کنید:"
-          promptPlaceholder="مثلاً: قبل از تعویض قالب"
-          label="پشتیبان‌گیری قبل از تغییر"
-          icon={<History className="h-4 w-4" />}
-          className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-4 h-11 text-[11px] font-bold text-slate-600 hover:border-pink-400 hover:text-pink-600 transition"
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <ThemeZipUpload />
+          <Link href="/admin/theme/themes/new" className="inline-flex items-center gap-1.5 rounded-2xl bg-pink-600 text-white px-4 h-11 text-[11px] font-black hover:bg-pink-500 transition shadow-lg shadow-pink-600/20"><PlusCircle className="h-5 w-5" /> افزودن قالب دستی</Link>
+        </div>
       </div>
 
       <div className="mt-4 grid md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -72,15 +69,22 @@ export default async function ThemesPage() {
                   {theme.isActive ? (
                     <span className="col-span-2 h-10 grid place-items-center rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black">در حال استفاده</span>
                   ) : (
-                    <ActionButton action="activateTheme" payload={{ slug: theme.slug }}
-                      label="فعال‌سازی" icon={<Power className="h-4 w-4" />}
-                      confirm={`قالب «${theme.name}» فعال شود؟ رنگ‌ها، فونت و گردی گوشه‌ها در کل سایت تغییر می‌کنند.`}
-                      className="col-span-2 h-10 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#14264a] text-amber-300 text-[10px] font-black hover:bg-[#1d3a63] transition inline-flex" />
+                    <div className="col-span-2 grid grid-cols-2 gap-1.5">
+                      <a href={`/api/admin/theme/preview?slug=${theme.slug}&action=start`} className="h-10 inline-flex items-center justify-center gap-1 rounded-xl border border-sky-300 bg-sky-50 text-sky-700 text-[10px] font-black hover:bg-sky-100 transition"><Eye className="h-4 w-4" /> پیش‌نمایش</a>
+                      <ActionButton action="activateTheme" payload={{ slug: theme.slug }}
+                        label="فعال‌سازی" icon={<Power className="h-4 w-4" />}
+                        confirm={`قالب «${theme.name}» فعال شود؟ رنگ‌ها، فونت و گردی گوشه‌ها در کل سایت تغییر می‌کنند.`}
+                        className="h-10 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#14264a] text-amber-300 text-[10px] font-black hover:bg-[#1d3a63] transition" />
+                    </div>
                   )}
                   <ActionButton action="duplicateTheme" payload={{ slug: theme.slug }}
                     promptLabel="نام رونوشت قالب:" promptKey="name" promptPlaceholder={`${theme.name} (رونوشت)`}
                     label="تکثیر" icon={<Copy className="h-4 w-4" />}
                     className="h-10 inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 text-slate-600 text-[10px] font-bold hover:border-pink-400 hover:text-pink-600 transition" />
+                  <ActionButton action="createChildTheme" payload={{ slug: theme.slug }}
+                    promptLabel="نام قالب فرزند:" promptKey="name" promptPlaceholder={`${theme.name} (فرزند)`}
+                    label="فرزند" icon={<GitBranch className="h-4 w-4" />}
+                    className="h-10 inline-flex items-center justify-center gap-1 rounded-xl border border-violet-200 text-violet-600 text-[10px] font-bold hover:bg-violet-50 transition" />
                   <ActionButton action="deleteTheme" payload={{ slug: theme.slug }}
                     label="حذف" icon={<Trash2 className="h-4 w-4" />}
                     confirm={theme.isActive ? "قالب فعال حذف نمی‌شود." : `قالب «${theme.name}» برای همیشه حذف شود؟`}
