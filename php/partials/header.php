@@ -57,6 +57,8 @@ if (themeBool('maintenance.enabled') && !isAdmin()) {
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
 <meta name="description" content="<?= e(themeGet('seo.default_description', 'خرید آنلاین لباس کودک و نوجوان')) ?>">
+<meta property="og:title" content="<?= e($pageTitle) ?>"><meta property="og:image" content="<?= e(themeGet('seo.og_image', 'assets/images/ref-hero.jpg')) ?>">
+<?php if (themeBool('seo.schema_org', true)): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'ClothingStore', 'name' => $storeName, 'description' => themeGet('seo.default_description'), 'telephone' => themeGet('header.phone'), 'address' => themeGet('footer.address'), 'email' => themeGet('footer.email')], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script><?php endif; ?>
 <style id="theme-vars"><?= themeCssVars() ?></style>
 <?php if (($cc = themeGet('custom.css')) !== ''): ?><style id="custom-css"><?= $cc ?></style><?php endif; ?>
 <?= themeGet('custom.head') ?>

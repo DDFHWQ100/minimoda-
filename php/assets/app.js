@@ -70,6 +70,14 @@
     t.addEventListener('animationend', function () { if (t.classList.contains('toast-out')) { t.remove(); } });
   });
 
+  /* ── پاپ‌آپ قابل مدیریت ───────────────────── */
+  document.querySelectorAll('.mm-popup').forEach(function (p) {
+    var key = 'mm_popup_' + p.id, once = p.getAttribute('data-once') === '1';
+    try { if (once && localStorage.getItem(key) === '1') return; } catch (e) {}
+    window.setTimeout(function () { p.hidden = false; }, (parseInt(p.getAttribute('data-delay'), 10) || 0) * 1000);
+    p.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', function () { p.hidden = true; try { localStorage.setItem(key, '1'); } catch (e) {} }); });
+  });
+
   /* ── سایه سربرگ هنگام اسکرول ───────────────────── */
   var header = document.getElementById('siteHeader');
   if (header) {

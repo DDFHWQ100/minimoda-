@@ -127,7 +127,7 @@ include __DIR__ . '/partials/header.php';
           <a class="btn btn-primary" href="products.php" style="height:44px;padding:0 26px;margin-top:10px">مشاهده همه محصولات</a>
         </div>
       <?php else: ?>
-        <div class="grid-products-4" style="display:grid;margin-top:12px">
+        <div class="grid-products-4<?= themeGet('layout.products', 'grid') === 'list' ? ' is-list' : '' ?>" style="display:grid;margin-top:12px">
           <?php foreach ($items as $p) renderProductCard($p); ?>
         </div>
 

@@ -40,3 +40,23 @@ $edit = null; if (!empty($_GET['edit'])) foreach ($items as $m) if ((int) $m['id
     <div class="adm-row"><button class="adm-btn adm-btn-primary"><?= $edit ? 'ذخیره' : 'افزودن' ?></button><?php if ($edit): ?><a class="adm-btn adm-btn-ghost" href="index.php?tab=menus&loc=<?= $loc ?>">انصراف</a><?php endif; ?></div>
   </form>
 </div>
+
+<?php $ws = $pdo->query('SELECT * FROM theme_widgets ORDER BY sort ASC, id ASC')->fetchAll(); $we = null; if (!empty($_GET['widget'])) foreach ($ws as $w) if ((int) $w['id'] === (int) $_GET['widget']) $we = $w; $wc = $we ? (json_decode($we['config'], true) ?: []) : []; ?>
+<h2 class="adm-h1" style="font-size:16px;margin-top:22px">ابزارک‌ها و پاپ‌آپ‌ها</h2>
+<div class="adm-grid-2">
+  <div class="adm-card"><ul class="adm-list">
+    <?php foreach ($ws as $w): $c = json_decode($w['config'], true) ?: []; ?>
+      <li style="<?= $w['enabled'] ? '' : 'opacity:.5' ?>"><span style="font-size:20px">💬</span><span class="grow"><b><?= e($w['title']) ?></b><small style="direction:rtl"><?= e($c['heading'] ?? '') ?> · بعد از <?= (int) ($c['delay'] ?? 0) ?> ثانیه<?= !empty($c['once']) ? ' · یک‌بار' : '' ?></small></span>
+        <span class="adm-row" style="gap:4px"><form method="post"><?= csrfField() ?><input type="hidden" name="action" value="toggle_widget"><input type="hidden" name="id" value="<?= $w['id'] ?>"><button class="adm-btn adm-btn-sm <?= $w['enabled'] ? 'adm-btn-navy' : 'adm-btn-ghost' ?>"><?= $w['enabled'] ? 'فعال' : 'خاموش' ?></button></form><a class="adm-btn adm-btn-ghost adm-btn-sm" href="index.php?tab=menus&loc=<?= $loc ?>&widget=<?= $w['id'] ?>#w">ویرایش</a><form method="post" onsubmit="return confirm('حذف شود؟')"><?= csrfField() ?><input type="hidden" name="action" value="delete_widget"><input type="hidden" name="id" value="<?= $w['id'] ?>"><button class="adm-btn adm-btn-danger adm-btn-sm">حذف</button></form></span></li>
+    <?php endforeach; if (!$ws): ?><li class="adm-note">ابزارکی نیست.</li><?php endif; ?></ul></div>
+  <form method="post" class="adm-card" id="w"><?= csrfField() ?><input type="hidden" name="action" value="save_widget"><input type="hidden" name="id" value="<?= (int) ($we['id'] ?? 0) ?>">
+    <h3 style="margin:0 0 8px;font-size:13px;color:var(--navy)"><?= $we ? 'ویرایش پاپ‌آپ' : 'پاپ‌آپ جدید' ?></h3>
+    <label class="adm-field"><span>نام داخلی *</span><input class="adm-input" name="title" required value="<?= e($we['title'] ?? '') ?>"></label>
+    <label class="adm-field"><span>تیتر پاپ‌آپ *</span><input class="adm-input" name="heading" required value="<?= e($wc['heading'] ?? '') ?>"></label>
+    <label class="adm-field"><span>متن</span><textarea class="adm-textarea" name="body" style="min-height:70px"><?= e($wc['body'] ?? '') ?></textarea></label>
+    <div class="adm-grid-2"><label class="adm-field"><span>متن دکمه</span><input class="adm-input" name="cta" value="<?= e($wc['cta'] ?? 'مشاهده') ?>"></label><label class="adm-field"><span>لینک</span><input class="adm-input" name="href" dir="ltr" value="<?= e($wc['href'] ?? 'products.php') ?>"></label></div>
+    <div class="adm-grid-2"><label class="adm-field"><span>تأخیر (ثانیه)</span><input class="adm-input" type="number" name="delay" min="0" max="60" value="<?= (int) ($wc['delay'] ?? 4) ?>"></label><label class="adm-row" style="font-size:11px;font-weight:700;padding-top:18px"><input type="checkbox" name="once" value="1" <?= !isset($wc['once']) || $wc['once'] ? 'checked' : '' ?>> فقط یک بار برای هر بازدیدکننده</label></div>
+    <button class="adm-btn adm-btn-primary"><?= $we ? 'ذخیره' : 'افزودن پاپ‌آپ' ?></button>
+    <p class="adm-note" style="margin-top:6px">HTML و اسکریپت پذیرفته نمی‌شود (امنیت). پاپ‌آپ فعال روی همه صفحات نمایش داده می‌شود.</p>
+  </form>
+</div>

@@ -94,9 +94,23 @@ function themeCssVars(): string {
     $width   = (int) themeGet('design.content_width', '1280');
     $bg      = themeGet('design.bg_color', '#f3f4f8');
     $anim    = themeBool('design.animations', true);
-    $css = ":root{--navy:{$primary};--navy-deep:{$primary};--navy-soft:{$primary};--pink:{$accent};--pink-dark:{$accent};--gold:{$gold};--radius:{$radius}px;--bg:{$bg}}";
-    $css .= "body{font-family:'{$font}',Tahoma,sans-serif;background:{$bg}}.wrap{max-width:{$width}px}";
+    $fs      = (int) themeGet('design.font_size_base', '14');
+    $hw      = (int) themeGet('design.font_weight_heading', '900');
+    $gap     = (int) themeGet('design.section_gap', '24');
+    $sh      = themeGet('design.shadow', 'soft');
+    $shadow  = $sh === 'none' ? 'none' : ($sh === 'strong' ? '0 18px 40px -12px rgba(20,38,74,.35)' : '0 10px 30px -12px rgba(20,38,74,.25)');
+    $tr      = (int) themeGet('design.transition_ms', '250');
+    $css = ":root{--navy:{$primary};--navy-deep:{$primary};--navy-soft:{$primary};--pink:{$accent};--pink-dark:{$accent};--gold:{$gold};--radius:{$radius}px;--bg:{$bg};--shadow:{$shadow};--section-gap:{$gap}px;--transition-ms:{$tr}ms}";
+    $css .= "body{font-family:'{$font}',Tahoma,sans-serif;background:{$bg};font-size:{$fs}px}.wrap{max-width:{$width}px}h1,h2,h3{font-weight:{$hw}}.sec-head{margin-top:{$gap}px}";
     if (!$anim) { $css .= "*,*::before,*::after{animation:none!important;transition:none!important}"; }
+    // واکنش‌گرا: مخفی‌کردن اجزا در دستگاه‌ها
+    if (themeBool('responsive.hide_banners_mobile'))  $css .= "@media(max-width:640px){.promo-grid{display:none!important}}";
+    if (themeBool('responsive.hide_trust_mobile'))    $css .= "@media(max-width:640px){.trust-row{display:none!important}}";
+    if (themeBool('responsive.hide_magazine_mobile')) $css .= "@media(max-width:640px){.mag-grid{display:none!important}}";
+    if (themeBool('responsive.hide_cats_mobile'))     $css .= "@media(max-width:640px){.cat-row{display:none!important}}";
+    if (themeBool('responsive.hide_duo_tablet'))      $css .= "@media(min-width:641px) and (max-width:1024px){.duo-banners{display:none!important}}";
+    if (themeGet('responsive.product_cols_mobile', '2') === '1') $css .= "@media(max-width:640px){.grid-products{grid-template-columns:1fr!important}}";
+    if (themeBool('layout.hero_compact')) $css .= ".hero{height:240px!important}@media(min-width:640px){.hero{height:300px!important}}";
     return $css;
 }
 
@@ -146,4 +160,54 @@ function themeRestore(int $id, string $actor): bool {
     } catch (Throwable $ex) { $pdo->rollBack(); return false; }
     themeLog($actor, 'بازیابی نسخه', 'بازگشت به پشتیبان «' . $rev['label'] . '»');
     return true;
+}
+
+/** ابزارک‌های فعال از نوع مشخص */
+function themeWidgets(string $type = 'popup'): array {
+    try { $st = db()->prepare('SELECT * FROM theme_widgets WHERE type = ? AND enabled = 1 ORDER BY sort ASC'); $st->execute([$type]); return $st->fetchAll(); }
+    catch (Throwable $ex) { return []; }
+}
+
+/** ثبت اعلان مدیریتی */
+function themeNotice(string $level, string $title, string $body = ''): void {
+    try { db()->prepare('INSERT INTO theme_notices (level, title, body) VALUES (?,?,?)')->execute([$level, mb_substr($title, 0, 160), mb_substr($body, 0, 600)]); }
+    catch (Throwable $ex) {}
+}
+
+/** بررسی سازگاری schema قالب با نسخه سیستم — ستون‌ها/جداول لازم */
+function themeCompatibility(): array {
+    $need = ['theme_settings', 'theme_themes', 'theme_sections', 'theme_banners', 'theme_menu_items', 'theme_activity', 'theme_revisions', 'theme_code_history', 'theme_widgets', 'theme_presets', 'theme_notices'];
+    $missing = [];
+    foreach ($need as $t) { try { db()->query("SELECT 1 FROM `{$t}` LIMIT 1"); } catch (Throwable $ex) { $missing[] = $t; } }
+    return ['ok' => !$missing, 'missing' => $missing, 'version' => '2.1'];
+}
+
+/** فهرست فایل‌های دارایی قالب (assets/ و uploads/) با تشخیص استفاده‌نشده */
+function themeAssets(): array {
+    $root = dirname(__FILE__);
+    $dirs = ['assets/images', 'assets/uploads', 'assets'];
+    $files = [];
+    foreach ($dirs as $d) {
+        $abs = $root . '/' . $d;
+        if (!is_dir($abs)) continue;
+        foreach (scandir($abs) ?: [] as $f) {
+            $p = $abs . '/' . $f;
+            if ($f[0] === '.' || is_dir($p)) continue;
+            $rel = $d . '/' . $f;
+            if (isset($files[$rel])) continue;
+            $files[$rel] = ['path' => $rel, 'name' => $f, 'size' => filesize($p), 'type' => strtolower(pathinfo($f, PATHINFO_EXTENSION)), 'mtime' => filemtime($p), 'deletable' => strpos($rel, 'assets/uploads/') === 0];
+        }
+    }
+    // استفاده‌شده‌ها: در تنظیمات، بنرها، محصولات، بلاگ
+    $blob = '';
+    try {
+        $pdo = db();
+        $blob .= implode("\n", $pdo->query('SELECT `value` FROM theme_settings')->fetchAll(PDO::FETCH_COLUMN));
+        $blob .= implode("\n", $pdo->query('SELECT image FROM theme_banners')->fetchAll(PDO::FETCH_COLUMN));
+        $blob .= implode("\n", $pdo->query('SELECT images FROM products')->fetchAll(PDO::FETCH_COLUMN));
+        $blob .= implode("\n", $pdo->query('SELECT image FROM blog_posts')->fetchAll(PDO::FETCH_COLUMN));
+    } catch (Throwable $ex) {}
+    foreach ($files as &$f) { $f['used'] = !$f['deletable'] || strpos($blob, $f['name']) !== false; }
+    usort($files, fn($a, $b) => $b['mtime'] <=> $a['mtime']);
+    return array_values($files);
 }

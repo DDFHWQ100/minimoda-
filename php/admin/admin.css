@@ -65,3 +65,23 @@ body.adm { background: #eef1f6; }
 .adm-note { font-size: 9px; color: #9ca3af; line-height: 1.8; }
 .adm-diff { background: #0e1c36; border-radius: 12px; padding: 10px; font-family: Consolas, monospace; font-size: 10px; direction: ltr; text-align: left; max-height: 200px; overflow: auto; color: #94a3b8; }
 .adm-diff .add { color: #6ee7b7; } .adm-diff .del { color: #fda4af; }
+
+/* ═══ تکمیلی: گروه‌های سایدبار، نوار بالا، فایل‌ها، حالت تاریک ═══ */
+.adm-group { font-size: 8px; font-weight: 900; letter-spacing: .12em; color: rgba(255,255,255,.4); margin: 10px 10px 3px; }
+.adm-badge { margin-inline-start: auto; background: var(--pink); color: #fff; font-style: normal; font-size: 9px; font-weight: 900; min-width: 18px; height: 18px; border-radius: 99px; display: grid; place-items: center; padding: 0 5px; }
+.adm-topbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid #e6e8ee; border-radius: 18px; padding: 8px 10px; margin-bottom: 12px; }
+.adm-assets { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.adm-asset { background: #fff; border: 1px solid #e6e8ee; border-radius: 14px; padding: 8px; display: grid; gap: 3px; }
+.adm-asset-prev { position: relative; height: 90px; border-radius: 10px; background: #f1f5f9; display: grid; place-items: center; overflow: hidden; }
+.adm-asset-prev img { width: 100%; height: 100%; object-fit: cover; }
+.adm-asset-prev em { position: absolute; top: 4px; right: 4px; background: #f59e0b; color: #fff; font-style: normal; font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 6px; }
+.adm-asset small { font-size: 9px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* حالت تاریک پنل (فقط پنل، نه سایت) */
+body.adm.is-dark { background: #0b1222; color: #e2e8f0; }
+body.adm.is-dark .adm-card, body.adm.is-dark .adm-stat, body.adm.is-dark .adm-topbar, body.adm.is-dark .adm-theme, body.adm.is-dark .adm-asset, body.adm.is-dark .adm-preview-box { background: #0f1b33; border-color: #1e2d4d; color: #e2e8f0; }
+body.adm.is-dark .adm-h1, body.adm.is-dark .adm-stat b, body.adm.is-dark .adm-theme-body h3, body.adm.is-dark .adm-list .grow b, body.adm.is-dark h3 { color: #e2e8f0 !important; }
+body.adm.is-dark .adm-input, body.adm.is-dark .adm-select, body.adm.is-dark .adm-textarea:not(.code) { background: #152341; color: #e2e8f0; border-color: #2a3b61; }
+body.adm.is-dark .adm-table th { background: #152341; color: #94a3b8; border-color: #2a3b61; } body.adm.is-dark .adm-table td { border-color: #1e2d4d; }
+body.adm.is-dark .adm-btn-ghost { background: #152341; border-color: #2a3b61; color: #cbd5e1; }
+body.adm.is-dark .adm-list li { border-color: #1e2d4d; } body.adm.is-dark .adm-asset-prev { background: #152341; }
+body.adm.is-dark .adm-device { background: #152341; border-color: #2a3b61; }

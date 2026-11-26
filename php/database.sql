@@ -7,6 +7,9 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- اگر قبلاً ایمپورت شده، جداول قدیمی حذف می‌شوند تا ایمپورت مجدد خطای Duplicate ندهد
+DROP TABLE IF EXISTS theme_notices;
+DROP TABLE IF EXISTS theme_presets;
+DROP TABLE IF EXISTS theme_widgets;
 DROP TABLE IF EXISTS theme_code_history;
 DROP TABLE IF EXISTS theme_revisions;
 DROP TABLE IF EXISTS theme_activity;
@@ -218,6 +221,7 @@ CREATE TABLE IF NOT EXISTS theme_themes (
   version VARCHAR(20) NOT NULL DEFAULT '1.0.0',
   preview VARCHAR(500) NOT NULL DEFAULT '',
   is_active TINYINT(1) NOT NULL DEFAULT 0,
+  parent_slug VARCHAR(80) DEFAULT NULL,
   tokens TEXT NOT NULL,
   installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -276,6 +280,34 @@ CREATE TABLE IF NOT EXISTS theme_code_history (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+CREATE TABLE IF NOT EXISTS theme_widgets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  type VARCHAR(30) NOT NULL DEFAULT 'popup',
+  title VARCHAR(120) NOT NULL,
+  config TEXT NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 0,
+  sort INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_presets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  description VARCHAR(300) NOT NULL DEFAULT '',
+  snapshot LONGTEXT NOT NULL,
+  created_by VARCHAR(80) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_notices (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  level VARCHAR(20) NOT NULL DEFAULT 'info',
+  title VARCHAR(160) NOT NULL,
+  body VARCHAR(600) NOT NULL DEFAULT '',
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- داده‌های اولیه قالب
 INSERT INTO theme_settings (`key`, `value`, label, `group`) VALUES
 ('store.name','مینی‌مودا','نام فروشگاه','general'),
@@ -305,6 +337,27 @@ INSERT INTO theme_settings (`key`, `value`, label, `group`) VALUES
 ('custom.js','','JavaScript سفارشی','code'),
 ('custom.head','','کدهای Head','code'),
 ('seo.default_description','خرید آنلاین لباس کودک و نوجوان با ضمانت اصالت کالا و ارسال سریع','توضیحات متا','seo'),
+('design.font_size_base','14','اندازه پایه فونت (px)','design'),
+('design.font_weight_heading','900','وزن تیترها','design'),
+('design.section_gap','24','فاصله بین بخش‌ها (px)','design'),
+('design.shadow','soft','شدت سایه','design'),
+('design.transition_ms','250','سرعت انتقال (ms)','design'),
+('responsive.hide_banners_mobile','0','پنهان بنرها در موبایل','responsive'),
+('responsive.hide_trust_mobile','0','پنهان نوار اعتماد در موبایل','responsive'),
+('responsive.hide_magazine_mobile','0','پنهان مجله در موبایل','responsive'),
+('responsive.hide_duo_tablet','0','پنهان بنر دوگانه در تبلت','responsive'),
+('responsive.hide_cats_mobile','0','پنهان دسته‌بندی‌ها در موبایل','responsive'),
+('responsive.product_cols_mobile','2','ستون محصول در موبایل','responsive'),
+('layout.products','grid','چیدمان کاتالوگ (grid|list)','pages'),
+('layout.hero_compact','0','هیرو فشرده','pages'),
+('seo.schema_org','1','داده‌های ساختاریافته','seo'),
+('seo.lazy_images','1','بارگذاری تنبل','seo'),
+('seo.title_suffix','| مینی‌مودا','پسوند عنوان','seo'),
+('seo.og_image','assets/images/ref-hero.jpg','تصویر اشتراک‌گذاری','seo'),
+('footer.show_trust_badges','1','نمایش نمادهای اعتماد','footer'),
+('footer.address','تهران، خیابان ولیعصر، بالاتر از پارک ملت، مجتمع نیایش، طبقه ۲','آدرس','footer'),
+('footer.email','support@minimoda.ir','ایمیل','footer'),
+('admin.dark','0','حالت تاریک پنل','admin'),
 ('maintenance.enabled','0','حالت تعمیر','general'),
 ('maintenance.message','سایت به‌طور موقت در حال به‌روزرسانی است؛ تا لحظاتی دیگر بازمی‌گردیم.','پیام حالت تعمیر','general');
 
@@ -338,6 +391,20 @@ INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, h
 SELECT 'main','پیراهن مجلسی','products.php?cat=girls&q=پیراهن',id,1,1,0 FROM theme_menu_items WHERE label='دخترانه' AND location='main' LIMIT 1;
 INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight)
 SELECT 'main','سارافون و ست','products.php?cat=formal',id,2,1,0 FROM theme_menu_items WHERE label='دخترانه' AND location='main' LIMIT 1;
+
+
+INSERT INTO theme_widgets (type, title, config, enabled, sort) VALUES
+('popup','پاپ‌آپ خوش‌آمدگویی','{"heading":"به مینی‌مودا خوش آمدید 🎉","body":"با کد WELCOME10 اولین خرید خود را با ۱۰٪ تخفیف انجام دهید.","cta":"شروع خرید","href":"products.php","delay":4,"once":1}',0,1);
+
+INSERT INTO theme_notices (level, title, body) VALUES
+('success','به پنل مدیریت قالب خوش آمدید','رنگ‌ها، منوها، بنرها و اجزای صفحه اصلی را از همین‌جا مدیریت کنید.'),
+('warning','نسخه جدید قالب در دسترس است','نسخه 2.1.0 قالب «مینی‌مودا مرجع» با بهبود سرعت منتشر شد؛ از «مدیریت قالب‌ها» نصب کنید.'),
+('security','توصیه امنیتی','رمز مدیر را دوره‌ای تغییر دهید و قبل از تغییرات بزرگ پشتیبان بگیرید.');
+
+INSERT INTO theme_presets (name, description, snapshot, created_by) VALUES
+('فروشگاهی کامل (پیش‌فرض)','همه بخش‌ها فعال','{"sections":{"hero":1,"categories":1,"banners":1,"popular":1,"trio":1,"trust":1,"magazine":1,"news":1,"duo":1,"tabs":1},"tokens":{"theme.primary":"#1b3a6b","theme.accent":"#e91e63","theme.gold":"#ffc107","theme.radius":"20"}}','system'),
+('مینیمال سریع','فقط هیرو، دسته‌ها و محصولات','{"sections":{"hero":1,"categories":1,"banners":0,"popular":1,"trio":0,"trust":0,"magazine":0,"news":0,"duo":0,"tabs":1},"tokens":{"theme.primary":"#334155","theme.accent":"#0f766e","theme.gold":"#a3e635","theme.radius":"12"}}','system'),
+('کمپین و حراج','تمرکز روی بنرها','{"sections":{"hero":1,"categories":1,"banners":1,"popular":1,"trio":1,"trust":0,"magazine":0,"news":0,"duo":1,"tabs":1},"tokens":{"theme.primary":"#4a1042","theme.accent":"#e11d48","theme.gold":"#fbbf24","theme.radius":"22"}}','system');
 
 INSERT INTO theme_activity (actor, action, detail) VALUES ('سیستم','نصب قالب','قالب «مینی‌مودا مرجع» v2.0.0 فعال شد');
 

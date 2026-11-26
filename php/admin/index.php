@@ -20,21 +20,18 @@ catch (Throwable $ex) {
 }
 
 $tab = preg_replace('/[^a-z_]/', '', (string) ($_GET['tab'] ?? 'overview')) ?: 'overview';
-$tabs = [
-    'overview'  => ['نمای کلی', '▦'],
-    'themes'    => ['مدیریت قالب‌ها', '◫'],
-    'design'    => ['رنگ‌ها و ظاهر', '◐'],
-    'hero'      => ['هیرو و هدر', '▭'],
-    'sections'  => ['اجزای صفحه اصلی', '☰'],
-    'banners'   => ['بنرها', '▣'],
-    'menus'     => ['منوها', '≡'],
-    'code'      => ['کدهای سفارشی', '</>'],
-    'seo'       => ['سئو و فوتر', '◎'],
-    'backup'    => ['پشتیبان و نسخه‌ها', '⟲'],
-    'activity'  => ['گزارش فعالیت‌ها', '≣'],
-    'settings'  => ['تنظیمات عمومی', '⚙'],
+$groups = [
+    'نمای کلی'        => ['overview' => ['نمای کلی', '▦']],
+    'قالب‌ها'          => ['themes' => ['مدیریت قالب‌ها', '◫'], 'install' => ['افزودن قالب', '＋'], 'code' => ['ویرایشگر قالب', '</>']],
+    'پوسته و صفحات'   => ['sections' => ['مدیریت پوسته', '☰'], 'pages' => ['مدیریت صفحات', '▤'], 'presets' => ['الگوهای آماده', '▦'], 'hero' => ['هدر و فوتر', '▭'], 'menus' => ['منوها و ابزارک‌ها', '≡'], 'banners' => ['بنرها و اسلایدر', '▣']],
+    'ظاهر'            => ['appearance' => ['تنظیمات ظاهری', '◧'], 'design' => ['رنگ‌ها و فونت‌ها', '◐'], 'assets' => ['مدیریت فایل‌ها', '▧'], 'responsive' => ['تنظیمات واکنش‌گرا', '▯']],
+    'کیفیت و سیستم'   => ['seo' => ['سئو و عملکرد', '◎'], 'backup' => ['نسخه‌بندی و پشتیبان', '⟲'], 'security' => ['امنیت و دسترسی‌ها', '⛨'], 'activity' => ['گزارش فعالیت‌ها', '≣'], 'notices' => ['اعلان‌ها', '🔔'], 'settings' => ['تنظیمات عمومی', '⚙']],
 ];
+$tabs = [];
+foreach ($groups as $items) foreach ($items as $k => $v) $tabs[$k] = $v;
 if (!isset($tabs[$tab])) { $tab = 'overview'; }
+$unreadNotices = 0;
+try { $unreadNotices = (int) $pdo->query('SELECT COUNT(*) FROM theme_notices WHERE is_read = 0')->fetchColumn(); } catch (Throwable $ex) {}
 
 // ── اکشن‌ها (POST) ────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -186,6 +183,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($h) { $pdo->prepare('INSERT INTO theme_code_history (`key`, content, created_by) VALUES (?,?,?)')->execute([$h['key'], themeGet($h['key']), $actor]); themeSet([$h['key'] => $h['content']], $actor); themeLog($actor, 'بازگردانی کد', $h['key']); flash('کد بازگردانده شد'); }
                 break;
             }
+            /* ─── قالب فرزند / بازگشت نسخه ─── */
+            case 'child_theme': {
+                $slug = (string) ($_POST['slug'] ?? '');
+                $st = $pdo->prepare('SELECT * FROM theme_themes WHERE slug = ?'); $st->execute([$slug]); $t = $st->fetch();
+                if (!$t) break;
+                $name = trim((string) ($_POST['name'] ?? '')) ?: $t['name'] . ' — فرزند';
+                $pdo->prepare('INSERT INTO theme_themes (name, slug, description, author, version, preview, is_active, parent_slug, tokens) VALUES (?,?,?,?,?,?,0,?,?)')
+                    ->execute([$name, $slug . '-child-' . base_convert((string) time(), 10, 36), 'قالب فرزند «' . $t['name'] . '» — تغییرات روی این نسخه اعمال می‌شود و والد دست‌نخورده می‌ماند.', $actor, $t['version'] . '-child', $t['preview'], $slug, $t['tokens']]);
+                themeLog($actor, 'ایجاد قالب فرزند', $name);
+                flash('قالب فرزند ساخته شد');
+                break;
+            }
+            case 'rollback_theme': {
+                $slug = (string) ($_POST['slug'] ?? '');
+                $revs = $pdo->query('SELECT label, snapshot FROM theme_revisions ORDER BY id DESC LIMIT 30')->fetchAll();
+                $done = false;
+                foreach ($revs as $r) { $d = json_decode($r['snapshot'], true); foreach ($d['themes'] ?? [] as $t) if ($t['slug'] === $slug) {
+                    $pdo->prepare('UPDATE theme_themes SET tokens=?, version=? WHERE slug=?')->execute([$t['tokens'], $t['version'], $slug]);
+                    themeLog($actor, 'بازگشت نسخه قالب', $slug . ' ← ' . $r['label']); flash('قالب به نسخه «' . $r['label'] . '» بازگشت'); $done = true; break 2; } }
+                if (!$done) flash('نسخه قبلی در پشتیبان‌ها یافت نشد؛ ابتدا پشتیبان بگیرید', 'error');
+                break;
+            }
+            /* ─── ابزارک / پاپ‌آپ ─── */
+            case 'save_widget': {
+                $id = (int) ($_POST['id'] ?? 0); $title = trim((string) ($_POST['title'] ?? ''));
+                $cfg = ['heading' => trim((string) ($_POST['heading'] ?? '')), 'body' => trim((string) ($_POST['body'] ?? '')), 'cta' => trim((string) ($_POST['cta'] ?? 'مشاهده')), 'href' => trim((string) ($_POST['href'] ?? 'products.php')), 'delay' => max(0, (int) ($_POST['delay'] ?? 4)), 'once' => isset($_POST['once']) ? 1 : 0];
+                if (mb_strlen($title) < 2 || $cfg['heading'] === '') { flash('عنوان و تیتر پاپ‌آپ الزامی است', 'error'); break; }
+                if (preg_match('/<script|javascript:|onerror=|onload=/i', json_encode($cfg, JSON_UNESCAPED_UNICODE))) { flash('محتوای ابزارک حاوی کد غیرمجاز است', 'error'); break; }
+                $j = json_encode($cfg, JSON_UNESCAPED_UNICODE);
+                if ($id > 0) $pdo->prepare('UPDATE theme_widgets SET title=?, config=? WHERE id=?')->execute([$title, $j, $id]);
+                else $pdo->prepare('INSERT INTO theme_widgets (type, title, config, enabled, sort) VALUES (?,?,?,0,1)')->execute(['popup', $title, $j]);
+                themeLog($actor, $id ? 'ویرایش ابزارک' : 'افزودن ابزارک', $title); flash('ابزارک ذخیره شد');
+                break;
+            }
+            case 'toggle_widget': $pdo->prepare('UPDATE theme_widgets SET enabled = 1 - enabled WHERE id = ?')->execute([(int) $_POST['id']]); break;
+            case 'delete_widget': $pdo->prepare('DELETE FROM theme_widgets WHERE id = ?')->execute([(int) $_POST['id']]); themeLog($actor, 'حذف ابزارک', '#' . (int) $_POST['id']); flash('ابزارک حذف شد'); break;
+            /* ─── الگوهای چیدمان ─── */
+            case 'save_preset': {
+                $name = trim((string) ($_POST['name'] ?? '')); if (mb_strlen($name) < 2) { flash('نام الگو الزامی است', 'error'); break; }
+                $sections = []; foreach ($pdo->query('SELECT id, enabled FROM theme_sections') as $r) $sections[$r['id']] = (int) $r['enabled'];
+                $tokens = []; foreach (['theme.primary', 'theme.accent', 'theme.gold', 'theme.radius', 'theme.font'] as $k) $tokens[$k] = themeGet($k);
+                $resp = []; foreach (themeSettings() as $k => $v) if (strpos($k, 'responsive.') === 0 || strpos($k, 'design.') === 0) $resp[$k] = $v;
+                $pdo->prepare('INSERT INTO theme_presets (name, description, snapshot, created_by) VALUES (?,?,?,?)')->execute([$name, trim((string) ($_POST['description'] ?? '')), json_encode(['sections' => $sections, 'tokens' => $tokens + $resp], JSON_UNESCAPED_UNICODE), $actor]);
+                themeLog($actor, 'ذخیره الگوی چیدمان', $name); flash('الگو ذخیره شد');
+                break;
+            }
+            case 'apply_preset': {
+                $st = $pdo->prepare('SELECT * FROM theme_presets WHERE id=?'); $st->execute([(int) $_POST['id']]); $pr = $st->fetch(); if (!$pr) break;
+                themeSnapshot('پیش از اعمال الگوی «' . $pr['name'] . '»', $actor);
+                $d = json_decode($pr['snapshot'], true) ?: [];
+                $up = $pdo->prepare('UPDATE theme_sections SET enabled=? WHERE id=?');
+                foreach ($d['sections'] ?? [] as $id => $en) $up->execute([(int) $en, $id]);
+                if (!empty($d['tokens'])) themeSet($d['tokens'], $actor);
+                themeLog($actor, 'اعمال الگوی چیدمان', $pr['name']); flash('الگو اعمال شد (پشتیبان خودکار گرفته شد)');
+                break;
+            }
+            case 'delete_preset': $pdo->prepare('DELETE FROM theme_presets WHERE id=?')->execute([(int) $_POST['id']]); flash('الگو حذف شد'); break;
+            /* ─── اعلان‌ها ─── */
+            case 'post_notice': {
+                $lvl = in_array($_POST['level'] ?? '', ['info', 'success', 'warning', 'security'], true) ? $_POST['level'] : 'info';
+                $title = trim((string) ($_POST['title'] ?? '')); if (mb_strlen($title) < 3) { flash('عنوان اعلان کوتاه است', 'error'); break; }
+                themeNotice($lvl, $title, trim((string) ($_POST['body'] ?? ''))); themeLog($actor, 'ثبت اعلان', $title); flash('اعلان منتشر شد');
+                break;
+            }
+            case 'read_notice': $pdo->prepare('UPDATE theme_notices SET is_read = 1 WHERE id=?')->execute([(int) $_POST['id']]); break;
+            case 'read_all_notices': $pdo->exec('UPDATE theme_notices SET is_read = 1'); break;
+            case 'delete_notice': $pdo->prepare('DELETE FROM theme_notices WHERE id=?')->execute([(int) $_POST['id']]); break;
+            /* ─── فایل‌ها ─── */
+            case 'upload_asset': {
+                $dir = dirname(__DIR__) . '/assets/uploads'; if (!is_dir($dir)) @mkdir($dir, 0755, true);
+                $ok = 0; $allowed = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'css', 'js', 'woff2', 'woff', 'ttf'];
+                foreach ($_FILES['files']['name'] ?? [] as $i => $nm) {
+                    if (($_FILES['files']['error'][$i] ?? 1) !== UPLOAD_ERR_OK) continue;
+                    $ext = strtolower(pathinfo($nm, PATHINFO_EXTENSION));
+                    if (!in_array($ext, $allowed, true) || $_FILES['files']['size'][$i] > 5 * 1024 * 1024) continue;
+                    $head = (string) file_get_contents($_FILES['files']['tmp_name'][$i], false, null, 0, 65536);
+                    if (in_array($ext, ['svg', 'css', 'js'], true) && preg_match('/<\?php|<script[\s>]|onerror\s*=|javascript:/i', $head)) continue;
+                    $safe = preg_replace('/[^A-Za-z0-9._-]+/', '-', pathinfo($nm, PATHINFO_FILENAME)) . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
+                    if (move_uploaded_file($_FILES['files']['tmp_name'][$i], $dir . '/' . $safe)) $ok++;
+                }
+                themeLog($actor, 'بارگذاری فایل', $ok . ' فایل'); flash($ok . ' فایل بارگذاری شد');
+                break;
+            }
+            case 'delete_asset': {
+                $rel = (string) ($_POST['path'] ?? '');
+                if (strpos($rel, 'assets/uploads/') !== 0 || strpos($rel, '..') !== false) { flash('فقط فایل‌های uploads قابل حذف‌اند', 'error'); break; }
+                @unlink(dirname(__DIR__) . '/' . $rel); themeLog($actor, 'حذف فایل', $rel); flash('فایل حذف شد');
+                break;
+            }
+            /* ─── امنیت ─── */
+            case 'set_role': {
+                $uid = (int) ($_POST['user_id'] ?? 0); $role = ($_POST['role'] ?? '') === 'admin' ? 'admin' : 'user';
+                if ($uid === (int) $me['id']) { flash('نقش خودتان را نمی‌توانید تغییر دهید', 'error'); break; }
+                $pdo->prepare('UPDATE users SET role=? WHERE id=?')->execute([$role, $uid]); themeLog($actor, 'تغییر نقش کاربر', "#{$uid} → {$role}"); flash('نقش کاربر تغییر کرد');
+                break;
+            }
             case 'clear_activity': { $pdo->exec('DELETE FROM theme_activity WHERE created_at < NOW() - INTERVAL 30 DAY'); flash('گزارش‌های قدیمی پاک شد'); break; }
         }
     } catch (Throwable $ex) {
@@ -212,13 +305,16 @@ $pageTitle = 'پنل مدیریت قالب | ' . $tabs[$tab][0];
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="admin.css">
 </head>
-<body class="adm">
+<body class="adm" data-tabs='<?= json_encode(array_map(fn($v) => $v[0], $tabs), JSON_UNESCAPED_UNICODE) ?>'>
 <div class="adm-shell">
   <aside class="adm-side">
     <div class="adm-brand"><span class="adm-crown">👑</span><div><b>مدیریت قالب و پوسته</b><small><?= e($actor) ?></small></div></div>
     <nav>
-      <?php foreach ($tabs as $k => [$label, $icon]): ?>
-        <a href="index.php?tab=<?= $k ?>" class="<?= $tab === $k ? 'is-active' : '' ?>"><span class="adm-ic"><?= $icon ?></span><?= e($label) ?></a>
+      <?php foreach ($groups as $gTitle => $items): ?>
+        <p class="adm-group"><?= e($gTitle) ?></p>
+        <?php foreach ($items as $k => [$label, $icon]): ?>
+          <a href="index.php?tab=<?= $k ?>" class="<?= $tab === $k ? 'is-active' : '' ?>"><span class="adm-ic"><?= $icon ?></span><?= e($label) ?><?php if ($k === 'notices' && $unreadNotices): ?><em class="adm-badge"><?= $unreadNotices ?></em><?php endif; ?></a>
+        <?php endforeach; ?>
       <?php endforeach; ?>
       <a href="../admin.php" class="adm-muted">← پنل فروشگاه (محصول/سفارش)</a>
       <a href="../index.php" target="_blank" class="adm-muted">↗ مشاهده سایت</a>
@@ -226,6 +322,13 @@ $pageTitle = 'پنل مدیریت قالب | ' . $tabs[$tab][0];
   </aside>
 
   <main class="adm-main">
+    <div class="adm-topbar">
+      <input class="adm-input" id="admSearch" placeholder="جستجو در بخش‌های پنل (مثلاً: فونت، بنر، پشتیبان)..." list="admSearchList" style="flex:1;min-width:200px">
+      <datalist id="admSearchList"><?php foreach ($tabs as $k => [$label]): ?><option value="<?= e($label) ?>" data-tab="<?= $k ?>"><?php endforeach; ?></datalist>
+      <a class="adm-btn adm-btn-ghost adm-btn-sm" href="index.php?tab=notices" title="اعلان‌ها">🔔<?php if ($unreadNotices): ?> <b style="color:var(--pink)"><?= $unreadNotices ?></b><?php endif; ?></a>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" id="admDark" type="button" title="حالت روشن/تاریک">◐</button>
+      <a class="adm-btn adm-btn-navy adm-btn-sm" href="../index.php" target="_blank">مشاهده سایت</a>
+    </div>
     <?php foreach (getFlashes() as $f): ?><div class="adm-flash <?= $f['type'] === 'error' ? 'is-error' : '' ?>"><?= e($f['msg']) ?></div><?php endforeach; ?>
     <?php include __DIR__ . '/tabs/' . $tab . '.php'; ?>
   </main>

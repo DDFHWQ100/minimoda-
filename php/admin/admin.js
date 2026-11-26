@@ -30,3 +30,16 @@
     inp.addEventListener('input', function(){ var p = document.getElementById('livePreview'); if (p) p.style.setProperty(inp.getAttribute('data-live'), inp.value + (inp.getAttribute('data-unit') || '')); });
   });
 })();
+
+/* ═══ جستجوی بخش‌ها + حالت تاریک ═══ */
+(function(){
+  var body = document.body;
+  try { if (localStorage.getItem('mm_adm_dark') === '1') body.classList.add('is-dark'); } catch(e){}
+  var dk = document.getElementById('admDark');
+  if (dk) dk.addEventListener('click', function(){ body.classList.toggle('is-dark'); try { localStorage.setItem('mm_adm_dark', body.classList.contains('is-dark') ? '1' : '0'); } catch(e){} });
+  var s = document.getElementById('admSearch'), tabs = {};
+  try { tabs = JSON.parse(body.getAttribute('data-tabs') || '{}'); } catch(e){}
+  if (s) s.addEventListener('change', function(){
+    var v = s.value.trim(); for (var k in tabs) { if (tabs[k] === v || tabs[k].indexOf(v) !== -1) { location.href = 'index.php?tab=' + k; return; } }
+  });
+})();

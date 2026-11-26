@@ -50,6 +50,12 @@
   <?php endforeach; ?>
 </div>
 
+<?php foreach (themeWidgets('popup') as $w): $c = json_decode($w['config'], true) ?: []; ?>
+<div class="mm-popup" id="mmPopup<?= (int) $w['id'] ?>" data-delay="<?= (int) ($c['delay'] ?? 4) ?>" data-once="<?= !empty($c['once']) ? 1 : 0 ?>" hidden>
+  <div class="mm-popup-bg" data-close></div>
+  <div class="mm-popup-box"><button class="mm-popup-x" data-close aria-label="بستن">×</button><div class="mm-popup-ic">🎁</div><h2><?= e($c['heading'] ?? '') ?></h2><p><?= e($c['body'] ?? '') ?></p><a class="btn btn-primary" href="<?= e($c['href'] ?? 'products.php') ?>" style="height:44px;border-radius:99px;margin-top:10px"><?= e($c['cta'] ?? 'مشاهده') ?></a></div>
+</div>
+<?php break; endforeach; ?>
 <script src="assets/app.js" defer></script>
 <?php if (($cj = themeGet('custom.js')) !== ''): ?><script id="custom-js"><?= $cj ?></script><?php endif; ?>
 </body>
