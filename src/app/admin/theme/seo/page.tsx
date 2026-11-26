@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { products } from "@/db/schema";
 import { getThemeBundle } from "@/lib/theme";
 import { parseJsonArray } from "@/lib/format";
+import SettingsGroupForm from "@/components/theme/settings-group-form";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,25 @@ export default async function SeoPage() {
           </div>
         </section>
       ))}
+      <div className="mt-6 grid lg:grid-cols-2 gap-4 items-start">
+        <SettingsGroupForm
+          title="تنظیمات سئو و ساختار" initial={s}
+          fields={[
+            { key: "seo.title_suffix", label: "پسوند عنوان صفحات", type: "text", dir: "ltr" },
+            { key: "seo.default_description", label: "توضیحات متا پیش‌فرض", type: "textarea" },
+            { key: "seo.og_image", label: "تصویر اشتراک‌گذاری (Open Graph)", type: "url" },
+            { key: "seo.schema_org", label: "درج داده‌های ساختاریافته Schema.org (ClothingStore)", type: "switch" },
+          ]}
+        />
+        <SettingsGroupForm
+          title="عملکرد و کش" initial={s}
+          fields={[
+            { key: "seo.lazy_images", label: "بارگذاری تنبل تصاویر (Lazy Loading)", type: "switch", hint: "تصاویر خارج از دید دیرتر لود می‌شوند" },
+            { key: "design.animations", label: "انیمیشن‌ها (خاموش = سریع‌تر)", type: "switch" },
+          ]}
+          note="کش صفحات توسط Next.js و CDN مدیریت می‌شود؛ تغییر هر تنظیم بلافاصله در درخواست بعدی اعمال می‌گردد. CSS/JS در زمان بیلد فشرده و باندل می‌شوند."
+        />
+      </div>
       <p className="mt-4 text-[9px] text-slate-400">بررسی‌های پیشرفته (Core Web Vitals واقعی، Schema.org، امتیاز Google PageSpeed) نیازمند اتصال به سرویس‌های خارجی و API کلیددار هستند؛ وضعیت آن‌ها در تب «اعلان‌ها» به‌عنوان کارهای زیرساختی ثبت شده است.</p>
     </div>
   );

@@ -30,7 +30,13 @@ const NAV = [
   { label: "تماس با ما", href: "/help#contact" },
 ];
 
-export default function Header({ userName, isAdmin }: { userName?: string | null; isAdmin?: boolean }) {
+export type HeaderNavItem = { label: string; href: string; highlight?: boolean; sub?: { label: string; href: string }[] };
+
+export default function Header({ userName, isAdmin, nav, announcement, phone }: {
+  userName?: string | null; isAdmin?: boolean;
+  nav?: HeaderNavItem[]; announcement?: string; phone?: string;
+}) {
+  const NAV_ITEMS: HeaderNavItem[] = nav && nav.length > 0 ? nav : NAV.map((n) => ({ label: n.label, href: n.href, highlight: n.href === "/", sub: "sub" in n ? n.sub : undefined }));
   const router = useRouter();
   const { cartCount, cartTotal, wishlist } = useStore();
   const [query, setQuery] = useState("");
@@ -58,7 +64,7 @@ export default function Header({ userName, isAdmin }: { userName?: string | null
         <div className="mx-auto max-w-7xl px-4 flex items-center justify-between gap-4">
           <span className="flex items-center gap-2 font-bold">
             <Truck className="h-3.5 w-3.5 text-amber-300" />
-            تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی
+            {announcement ?? "تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی"}
           </span>
           <div className="hidden md:flex items-center gap-4 text-white/80">
             <a href="/help#contact" className="flex items-center gap-1.5 hover:text-white transition"><Phone className="h-3 w-3" /> پشتیبانی مشتریان</a>
@@ -157,20 +163,20 @@ export default function Header({ userName, isAdmin }: { userName?: string | null
         {/* ── منوی ناوبری (آیتم‌های کپسولی) ─────────────────────────── */}
         <nav className="hidden md:block border-t border-slate-100 bg-white">
           <div className="mx-auto max-w-7xl px-4 flex items-center justify-center gap-1.5 py-2">
-            {NAV.map((item, i) => (
+            {NAV_ITEMS.map((item) => (
               <div key={item.label + item.href} className="relative group">
                 <Link
                   href={item.href}
                   className={`flex items-center gap-1 px-4 py-2 rounded-full text-[12px] font-bold transition-all ${
-                    i === 0 ? "text-white shadow-md shadow-pink-600/30" : "text-[#1b3a6b] hover:bg-pink-50 hover:text-pink-600"
+                    item.highlight ? "text-white shadow-md shadow-pink-600/30" : "text-[#1b3a6b] hover:bg-pink-50 hover:text-pink-600"
                   }`}
-                  style={i === 0 ? { background: "var(--brand-accent)" } : undefined}
+                  style={item.highlight ? { background: "var(--brand-accent)" } : undefined}
                 >
-                  {item.icon && <item.icon className="h-3.5 w-3.5" />}
+                  {item.href === "/" && <Home className="h-3.5 w-3.5" />}
                   {item.label}
-                  {item.sub && <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />}
+                  {item.sub && item.sub.length > 0 && <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />}
                 </Link>
-                {item.sub && (
+                {item.sub && item.sub.length > 0 && (
                   <div className="absolute top-full right-0 mt-1 min-w-52 rounded-2xl border border-slate-100 bg-white shadow-2xl shadow-slate-900/10 p-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-200 z-50">
                     {item.sub.map((s) => (
                       <Link key={s.label} href={s.href} className="block px-3 py-2 rounded-xl text-[12px] text-slate-600 hover:bg-pink-50 hover:text-pink-700 transition">{s.label}</Link>
@@ -205,7 +211,7 @@ export default function Header({ userName, isAdmin }: { userName?: string | null
                 <button type="submit" className="h-full px-4 text-white" style={{ background: "var(--brand-accent)" }}><Search className="h-5 w-5" /></button>
               </form>
               <ul className="divide-y divide-slate-100">
-                {NAV.map((item) => (
+                {NAV_ITEMS.map((item) => (
                   <li key={item.label + item.href}>
                     <Link href={item.href} onClick={() => setMenuOpen(false)} className="flex items-center justify-between py-3.5 px-2 font-bold text-[#1b3a6b] hover:text-pink-600">
                       {item.label}
@@ -219,7 +225,7 @@ export default function Header({ userName, isAdmin }: { userName?: string | null
               </ul>
             </div>
             <div className="p-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-2">
-              <a href="tel:02188766554" className="flex items-center gap-2 font-bold text-[#1b3a6b]" dir="ltr"><Phone className="h-4 w-4" /> 021-88766554</a>
+              <a href={`tel:${(phone ?? "021-88766554").replace(/\D/g, "")}`} className="flex items-center gap-2 font-bold text-[#1b3a6b]" dir="ltr"><Phone className="h-4 w-4" /> {phone ?? "021-88766554"}</a>
               <p>پاسخگویی شنبه تا پنجشنبه ۹ تا ۲۱</p>
               {userName && <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-slate-600"><LogOut className="h-4 w-4" /> حساب کاربری من</Link>}
             </div>

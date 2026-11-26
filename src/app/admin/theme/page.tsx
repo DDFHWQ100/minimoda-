@@ -7,7 +7,7 @@ import {
   History, Bell, ShieldCheck, Gauge, ArrowLeft, Sparkles, AlertTriangle, CheckCircle2, ChevronLeft,
 } from "lucide-react";
 import { db } from "@/db";
-import { activityLogs, notices, themes, homepageSections } from "@/db/schema";
+import { activityLogs, notices, themes, homepageSections, menuItems, widgets, layoutPresets, banners, products } from "@/db/schema";
 import { getThemeBundle } from "@/lib/theme";
 import { faDate, toFaDigits } from "@/lib/format";
 
@@ -33,13 +33,21 @@ async function countAssets(): Promise<{ count: number; bytes: number }> {
 export default async function ThemeOverviewPage() {
   const bundle = await getThemeBundle();
   const activeTheme = bundle.activeTheme;
-  const [assets, recentLogs, allNotices, weeklyRows, sectionCount] = await Promise.all([
+  const [assets, recentLogs, allNotices, weeklyRows, sectionCount, menuCount, widgetCount, presetCount, bannerCount, noImageCount] = await Promise.all([
     countAssets(),
     db.select().from(activityLogs).orderBy(desc(activityLogs.createdAt)).limit(6),
     db.select().from(notices),
     db.select({ day: sql<string>`to_char(${activityLogs.createdAt}, 'YYYY-MM-DD')`, c: sql<number>`count(*)` }).from(activityLogs).where(sql`${activityLogs.createdAt} > now() - interval '7 days'`).groupBy(sql`1`).orderBy(sql`1`),
     db.select({ c: sql<number>`count(*)` }).from(homepageSections).where(sql`${homepageSections.enabled} = true`),
+    db.select({ c: sql<number>`count(*)` }).from(menuItems),
+    db.select({ c: sql<number>`count(*)` }).from(widgets),
+    db.select({ c: sql<number>`count(*)` }).from(layoutPresets),
+    db.select({ c: sql<number>`count(*)` }).from(banners),
+    db.select({ c: sql<number>`count(*)` }).from(products).where(sql`${products.images} = '[]'`),
   ]);
+  const customComponents = Number(menuCount[0]?.c ?? 0) + Number(widgetCount[0]?.c ?? 0) + Number(bannerCount[0]?.c ?? 0);
+  const issues = Number(noImageCount[0]?.c ?? 0) + (bundle.settings["maintenance.enabled"] === "true" ? 1 : 0);
+  const perfScore = Math.max(60, 100 - issues * 5 - (bundle.settings["design.animations"] === "false" ? 0 : 0));
 
   const enabledSections = Number(sectionCount[0]?.c ?? 0);
   const unread = allNotices.filter((n) => !n.read);
@@ -59,12 +67,12 @@ export default async function ThemeOverviewPage() {
   const stats = [
     { icon: LayoutTemplate, label: "قالب‌های نصب‌شده", value: toFaDigits(bundle.themes.length), tint: "from-violet-400 to-purple-600", href: "/admin/theme/themes" },
     { icon: PackageCheck, label: "قالب فعال", value: activeTheme?.name ?? "—", tint: "from-emerald-400 to-teal-600", href: "/admin/theme/themes" },
-    { icon: FileText, label: "الگوهای صفحه", value: "۱۲ الگو", tint: "from-sky-400 to-blue-600", href: "/admin/theme/pages" },
-    { icon: Blocks, label: "اجزای فعال صفحه اصلی", value: `${toFaDigits(enabledSections)} از ۸`, tint: "from-amber-300 to-orange-500", href: "/admin/theme/sections" },
+    { icon: FileText, label: "الگوهای صفحه + چیدمان", value: `۱۲ صفحه · ${toFaDigits(Number(presetCount[0]?.c ?? 0))} الگو`, tint: "from-sky-400 to-blue-600", href: "/admin/theme/presets" },
+    { icon: Blocks, label: "اجزای سفارشی (منو/بنر/ابزارک)", value: `${toFaDigits(customComponents)} جزء · ${toFaDigits(enabledSections)}/۸ بخش فعال`, tint: "from-amber-300 to-orange-500", href: "/admin/theme/menus" },
     { icon: FolderOpen, label: "فایل‌های دارایی", value: toFaDigits(assets.count), tint: "from-pink-400 to-rose-600", href: "/admin/theme/assets" },
     { icon: HardDrive, label: "حجم کل دارایی‌ها", value: `${(assets.bytes / 1024 / 1024).toFixed(2)} مگابایت`, tint: "from-slate-400 to-slate-600", href: "/admin/theme/assets" },
     { icon: ShieldCheck, label: "هشدارهای امنیتی/سازگاری", value: toFaDigits(securityNotices), tint: securityNotices > 0 ? "from-rose-400 to-red-600" : "from-emerald-400 to-teal-600", href: "/admin/theme/notifications" },
-    { icon: Gauge, label: "آخرین بررسی سلامت", value: "امروز، خودکار", tint: "from-cyan-400 to-sky-600", href: "/admin/theme/seo" },
+    { icon: Gauge, label: "وضعیت عملکرد و مشکلات قالب", value: `${toFaDigits(perfScore)}٪ · ${toFaDigits(issues)} مشکل`, tint: issues > 0 ? "from-amber-400 to-orange-600" : "from-cyan-400 to-sky-600", href: "/admin/theme/seo" },
   ];
 
   return (

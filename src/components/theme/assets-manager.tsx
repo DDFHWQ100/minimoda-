@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { UploadCloud, Search, Trash2, Loader2, FileImage, FileCode2, FileText, File as FileIcon, Copy, Check, RefreshCw, HardDrive } from "lucide-react";
 
-type Asset = { path: string; name: string; size: number; type: string; modified: string };
-type ListResponse = { files: Asset[]; totalBytes: number; count: number };
+type Asset = { path: string; name: string; size: number; type: string; modified: string; used?: boolean };
+type ListResponse = { files: Asset[]; totalBytes: number; count: number; unusedCount?: number };
 
 const fmtSize = (n: number) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 const typeIcon = (t: string) => {
@@ -20,6 +20,7 @@ export default function AssetsManager() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
+  const [onlyUnused, setOnlyUnused] = useState(false);
   const [copied, setCopied] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -70,7 +71,9 @@ export default function AssetsManager() {
     window.setTimeout(() => setCopied(""), 1600);
   };
 
-  const filtered = useMemo(() => (data?.files ?? []).filter((f) => !query || f.name.toLowerCase().includes(query.toLowerCase()) || f.path.toLowerCase().includes(query.toLowerCase())), [data, query]);
+  const filtered = useMemo(() => (data?.files ?? [])
+    .filter((f) => !onlyUnused || f.used === false)
+    .filter((f) => !query || f.name.toLowerCase().includes(query.toLowerCase()) || f.path.toLowerCase().includes(query.toLowerCase())), [data, query, onlyUnused]);
 
   return (
     <div className="mt-4 space-y-4">
@@ -97,7 +100,10 @@ export default function AssetsManager() {
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="جستجوی فایل..." className="w-full h-11 rounded-2xl border border-slate-200 bg-white pr-10 pl-3 text-[12px] outline-none focus:border-pink-400" />
         </div>
-        <p className="text-[10px] text-slate-400">{filtered.length.toLocaleString("fa-IR")} فایل نمایش داده می‌شود</p>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setOnlyUnused((v) => !v)} className={`rounded-full px-3 h-9 text-[10px] font-bold border transition ${onlyUnused ? "bg-amber-500 border-amber-500 text-white" : "bg-white border-slate-200 text-slate-600"}`}>فقط استفاده‌نشده‌ها ({(data?.unusedCount ?? 0).toLocaleString("fa-IR")})</button>
+          <p className="text-[10px] text-slate-400">{filtered.length.toLocaleString("fa-IR")} فایل</p>
+        </div>
       </div>
 
       {loading ? (
@@ -112,6 +118,7 @@ export default function AssetsManager() {
               <div key={f.path} className="rounded-2xl border border-slate-200/70 bg-white overflow-hidden shadow-sm group">
                 <div className="relative h-24 sm:h-28 bg-slate-50 grid place-items-center overflow-hidden">
                   {isImage ? <img src={`/${f.path}`} alt={f.name} loading="lazy" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} /> : <Icon className="h-9 w-9 text-slate-300" strokeWidth={1.4} />}
+                  {f.used === false && <span className="absolute top-1 right-1 rounded-md bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5">بدون استفاده</span>}
                 </div>
                 <div className="p-2">
                   <p dir="ltr" className="text-[8px] font-mono text-slate-500 truncate text-left" title={f.path}>{f.name}</p>
