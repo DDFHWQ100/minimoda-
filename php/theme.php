@@ -77,11 +77,19 @@ function themeMenu(string $location): array {
         $rows->execute([$location]);
         $all = $rows->fetchAll();
     } catch (Throwable $ex) { return []; }
-    $roots = array_values(array_filter($all, fn($m) => empty($m['parent_id'])));
-    foreach ($roots as &$r) {
-        $r['sub'] = array_values(array_filter($all, fn($m) => (int) ($m['parent_id'] ?? 0) === (int) $r['id']));
+    // بدون رفرنس (&) تا باگ «رفرنس باقی‌مانده» در PHP پیش نیاید
+    $out = [];
+    foreach ($all as $row) {
+        if (!is_array($row) || !empty($row['parent_id'])) { continue; }
+        $subs = [];
+        foreach ($all as $c) {
+            if (is_array($c) && (int) ($c['parent_id'] ?? 0) === (int) $row['id']) {
+                $subs[] = ['label' => (string) $c['label'], 'href' => (string) $c['href']];
+            }
+        }
+        $out[] = ['id' => (int) $row['id'], 'label' => (string) $row['label'], 'href' => (string) $row['href'], 'highlight' => (bool) ($row['highlight'] ?? 0), 'sub' => $subs];
     }
-    return $roots;
+    return $out;
 }
 
 /** CSS variables قالب فعال — در <head> تزریق می‌شود */
@@ -207,7 +215,8 @@ function themeAssets(): array {
         $blob .= implode("\n", $pdo->query('SELECT images FROM products')->fetchAll(PDO::FETCH_COLUMN));
         $blob .= implode("\n", $pdo->query('SELECT image FROM blog_posts')->fetchAll(PDO::FETCH_COLUMN));
     } catch (Throwable $ex) {}
-    foreach ($files as &$f) { $f['used'] = !$f['deletable'] || strpos($blob, $f['name']) !== false; }
-    usort($files, fn($a, $b) => $b['mtime'] <=> $a['mtime']);
-    return array_values($files);
+    $out = [];
+    foreach ($files as $f) { $f['used'] = !$f['deletable'] || strpos($blob, $f['name']) !== false; $out[] = $f; }
+    usort($out, fn($a, $b) => $b['mtime'] <=> $a['mtime']);
+    return $out;
 }

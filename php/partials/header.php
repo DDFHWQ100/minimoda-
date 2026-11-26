@@ -7,10 +7,13 @@ $cartTotalsCache = $cartN > 0 ? cartTotals() : ['total' => 0];
 // منو از دیتابیس (مدیریت از پنل قالب) — در نبود جدول، منوی پیش‌فرض
 $dbMenu = themeMenu('main');
 $nav = [];
-foreach ($dbMenu as $m) {
+foreach ($dbMenu as $menuRow) {
+    if (!is_array($menuRow)) { continue; }
     $nav[] = [
-        'label' => $m['label'], 'href' => $m['href'], 'home' => (bool) $m['highlight'],
-        'sub' => array_map(fn($c) => ['label' => $c['label'], 'href' => $c['href']], $m['sub'] ?? []),
+        'label' => (string) ($menuRow['label'] ?? ''),
+        'href'  => (string) ($menuRow['href'] ?? 'index.php'),
+        'home'  => !empty($menuRow['highlight']),
+        'sub'   => is_array($menuRow['sub'] ?? null) ? $menuRow['sub'] : [],
     ];
 }
 if (!$nav) $nav = [
