@@ -7,6 +7,14 @@ SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- اگر قبلاً ایمپورت شده، جداول قدیمی حذف می‌شوند تا ایمپورت مجدد خطای Duplicate ندهد
+DROP TABLE IF EXISTS theme_code_history;
+DROP TABLE IF EXISTS theme_revisions;
+DROP TABLE IF EXISTS theme_activity;
+DROP TABLE IF EXISTS theme_menu_items;
+DROP TABLE IF EXISTS theme_banners;
+DROP TABLE IF EXISTS theme_sections;
+DROP TABLE IF EXISTS theme_themes;
+DROP TABLE IF EXISTS theme_settings;
 DROP TABLE IF EXISTS newsletter_subscribers;
 DROP TABLE IF EXISTS blog_posts;
 DROP TABLE IF EXISTS reviews;
@@ -190,5 +198,147 @@ INSERT INTO blog_posts (title, slug, excerpt, content, image, tag, views) VALUES
 ('چطور کفش استاندارد برای رشد پای کودک انتخاب کنیم؟', 'right-shoes-for-kids', 'پنج نکته طلایی برای انتخاب کفش سالم که قدم‌های اول را برای فرزندتان خاطره‌انگیز می‌کند.', 'پای کودک تا ۱۲ سالگی در حال رشد است و پاافزار نامناسب می‌تواند باعث مشکلات اسکلتی شود. پنجه کفش باید حداقل یک سانتی‌متر فضا داشته باشد و پاشنه بیش از دو سانتی‌متر نباشد.\n\nزیره EVA با انعطاف مناسب بهترین انتخاب است. کفشی که خم نمی‌شود، پای کودک را خسته می‌کند.\n\nخرید کفش ارتوپدی برای کودکان سالم ضروری نیست، اما در ناهنجاری‌های کف پا حتماً با پزشک ارتوپد مشورت کنید.', 'https://images.pexels.com/photos/30395128/pexels-photo-30395128.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', 'سلامت کودک', 2874),
 ('ترندهای پاییز و زمستان مد کودک در سال ۲۰۲۶', 'fall-winter-2026-trends', 'از پالت رنگ‌های خاکی تا پارچه‌های بازیافتی؛ مهم‌ترین ترندهای امسال را بشناسید.', 'پالت رنگ فصل جاری بر پایه خاکی، کاراملی و سبز زیتونی با تأکید بر صورتی گردویی استوار است. برندهای مطرح دنیا به سمت پارچه‌های ارگانیک و بازیافتی رفته‌اند.\n\nکاپشن‌های اورسایز با جزئیات رفلکتور ایمنی و کت تک‌های اسپرت دوطرفه از پرفروش‌ترین آیتم‌های فصل هستند.\n\nدر ایران نیز استقبال از ست‌های خانوادگی و رنگ‌های خنثی با اکسسوری‌های رنگی چشمگیر افزایش یافته است.', 'https://images.pexels.com/photos/35607631/pexels-photo-35607631.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', 'ترند مد', 4102),
 ('لباس زمستانی گرم و ایمن؛ راهنمای مادران باهوش', 'winter-clothes-guide', 'لایه‌لایه بپوشانید، هوشمند خرید کنید؛ نکات ایمنی کاپشن و پالتو کودک.', 'قانون سه لایه بهترین راه برای گرم نگه‌داشتن کودک است: لایه اول حرارتی پنبه‌ای، لایه میانی پشمی یا فلانل و لایه بیرونی ضدآب و ضدباد.\n\nاز کلاه‌های بنددار بلند که خطر گره خوردن دارند پرهیز کنید و زیپ‌ها را با محافظ پارچه‌ای بپوشانید.\n\nکاپشن خیلی بزرگ هم به اندازه کاپشن تنگ خطرناک است؛ اندازه بهتر، یک سایز بزرگ‌تر با کمرکشی است.', 'https://images.pexels.com/photos/19579097/pexels-photo-19579097.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940', 'سبک زندگی', 1953);
+
+-- ═══════════ مدیریت قالب و پوسته (پنل admin/) ═══════════
+CREATE TABLE IF NOT EXISTS theme_settings (
+  `key` VARCHAR(80) PRIMARY KEY,
+  `value` TEXT NOT NULL,
+  label VARCHAR(160) NOT NULL DEFAULT '',
+  `group` VARCHAR(40) NOT NULL DEFAULT 'general',
+  updated_by VARCHAR(80) NOT NULL DEFAULT 'system',
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_themes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(80) NOT NULL UNIQUE,
+  description VARCHAR(400) NOT NULL DEFAULT '',
+  author VARCHAR(80) NOT NULL DEFAULT 'MiniModa Studio',
+  version VARCHAR(20) NOT NULL DEFAULT '1.0.0',
+  preview VARCHAR(500) NOT NULL DEFAULT '',
+  is_active TINYINT(1) NOT NULL DEFAULT 0,
+  tokens TEXT NOT NULL,
+  installed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_sections (
+  id VARCHAR(40) PRIMARY KEY,
+  label VARCHAR(120) NOT NULL,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  sort INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_banners (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(160) NOT NULL,
+  subtitle VARCHAR(160) NOT NULL DEFAULT '',
+  href VARCHAR(300) NOT NULL DEFAULT 'products.php',
+  image VARCHAR(500) NOT NULL DEFAULT '',
+  tone VARCHAR(40) NOT NULL DEFAULT 'rgba(15,23,42,.8)',
+  sort INT NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_menu_items (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  location VARCHAR(30) NOT NULL DEFAULT 'main',
+  label VARCHAR(120) NOT NULL,
+  href VARCHAR(300) NOT NULL DEFAULT 'index.php',
+  parent_id INT UNSIGNED DEFAULT NULL,
+  sort INT NOT NULL DEFAULT 0,
+  enabled TINYINT(1) NOT NULL DEFAULT 1,
+  highlight TINYINT(1) NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_activity (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  actor VARCHAR(80) NOT NULL DEFAULT 'سیستم',
+  action VARCHAR(120) NOT NULL,
+  detail VARCHAR(400) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_revisions (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  label VARCHAR(160) NOT NULL,
+  snapshot LONGTEXT NOT NULL,
+  created_by VARCHAR(80) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS theme_code_history (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `key` VARCHAR(40) NOT NULL,
+  content LONGTEXT NOT NULL,
+  created_by VARCHAR(80) NOT NULL DEFAULT 'admin',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- داده‌های اولیه قالب
+INSERT INTO theme_settings (`key`, `value`, label, `group`) VALUES
+('store.name','مینی‌مودا','نام فروشگاه','general'),
+('store.tagline','Kids & Teens Fashion','شعار زیر لوگو','general'),
+('announcement.enabled','1','نمایش نوار اطلاع‌رسانی','header'),
+('announcement.text','تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی','متن نوار اطلاع‌رسانی','header'),
+('header.phone','021-88766554','تلفن پشتیبانی','header'),
+('theme.primary','#1b3a6b','رنگ اصلی','design'),
+('theme.accent','#e91e63','رنگ تأکیدی','design'),
+('theme.gold','#ffc107','رنگ طلایی','design'),
+('theme.radius','20','گردی گوشه‌ها (px)','design'),
+('theme.font','Vazirmatn','فونت','design'),
+('design.content_width','1280','عرض محتوا (px)','design'),
+('design.bg_color','#f3f4f8','رنگ پس‌زمینه','design'),
+('design.animations','1','انیمیشن‌ها','design'),
+('hero.title','استایل خاص<br>برای نسل خاص!','تیتر هیرو','hero'),
+('hero.sub','جدیدترین کالکشن لباس کودک و نوجوان','زیرتیتر هیرو','hero'),
+('hero.cta','مشاهده مجموعه','متن دکمه هیرو','hero'),
+('hero.href','products.php?cat=formal','لینک دکمه هیرو','hero'),
+('hero.badge','۷۰٪','نشان گرد هیرو','hero'),
+('hero.image','assets/images/ref-hero.jpg','تصویر هیرو','hero'),
+('footer.about','فروشگاه اینترنتی پوشاک کودک و نوجوان — کیفیت و جدیدترین مدل‌ها با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.','متن درباره فوتر','footer'),
+('footer.instagram','https://www.instagram.com/minimoda.ir','اینستاگرام','footer'),
+('footer.telegram','https://t.me/minimoda_ir','تلگرام','footer'),
+('footer.copyright','© ۱۴۰۴ — کلیه حقوق محفوظ است — فروشگاه مینی‌مودا','کپی‌رایت','footer'),
+('custom.css','','CSS سفارشی','code'),
+('custom.js','','JavaScript سفارشی','code'),
+('custom.head','','کدهای Head','code'),
+('seo.default_description','خرید آنلاین لباس کودک و نوجوان با ضمانت اصالت کالا و ارسال سریع','توضیحات متا','seo'),
+('maintenance.enabled','0','حالت تعمیر','general'),
+('maintenance.message','سایت به‌طور موقت در حال به‌روزرسانی است؛ تا لحظاتی دیگر بازمی‌گردیم.','پیام حالت تعمیر','general');
+
+INSERT INTO theme_themes (name, slug, description, author, version, preview, is_active, tokens) VALUES
+('مینی‌مودا مرجع','minimoda-reference','قالب رسمی فروشگاه — سرمه‌ای با صورتی پررنگ و طلایی؛ همان قالب مرجع.','MiniModa Studio','2.0.0','https://images.pexels.com/photos/5088176/pexels-photo-5088176.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=500&w=800',1,'{"primary":"#1b3a6b","accent":"#e91e63","gold":"#ffc107","font":"Vazirmatn","radius":"20"}'),
+('رویال جونیور','royal-junior','پوسته مجلسی و لوکس با بنفش ارغوانی و رز گلد.','MiniModa Studio','1.4.0','https://images.pexels.com/photos/29668588/pexels-photo-29668588.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=500&w=800',0,'{"primary":"#4a1042","accent":"#e11d48","gold":"#fbbf24","font":"Vazirmatn","radius":"22"}'),
+('مینیمال مدرن','minimal-modern','پوسته خلوت با خاکستری اسلیت و سبز زمردی.','MiniModa Lab','1.1.0','https://images.pexels.com/photos/12159459/pexels-photo-12159459.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=500&w=800',0,'{"primary":"#334155","accent":"#0f766e","gold":"#a3e635","font":"Vazirmatn","radius":"12"}');
+
+INSERT INTO theme_sections (id, label, enabled, sort) VALUES
+('hero','اسلایدر اصلی (هیرو)',1,1),('categories','دسته‌بندی‌های گرد',1,2),('banners','بنرهای تبلیغاتی ۴ تایی',1,3),
+('popular','محبوب‌ترین‌ها',1,4),('trio','سه بنر کالکشن',1,5),('trust','نوار اعتماد',1,6),
+('magazine','مجله + ست‌های پیشنهادی',1,7),('news','جدیدترین اخبار مد',1,8),('duo','بنرهای دوگانه',1,9),('tabs','تب محصولات',1,10);
+
+INSERT INTO theme_banners (title, subtitle, href, image, tone, sort, active) VALUES
+('کاپشن‌های زمستانی','تا ۳۰٪ تخفیف','products.php?cat=kids','https://images.pexels.com/photos/29224161/pexels-photo-29224161.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1000','rgba(136,19,55,.8)',1,1),
+('پیراهن‌های مجلسی','کالکشن سلطنتی','products.php?cat=formal','https://images.pexels.com/photos/33939726/pexels-photo-33939726.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1000','rgba(88,28,135,.8)',2,1),
+('کتانی‌های ورزشی','ضد لغزش و سبک','products.php?cat=shoes','https://images.pexels.com/photos/9537104/pexels-photo-9537104.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1000','rgba(12,74,110,.8)',3,1),
+('کت و شلوار پسرانه','ست کامل رسمی','products.php?cat=boys','https://images.pexels.com/photos/30690921/pexels-photo-30690921.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1000','rgba(15,23,42,.85)',4,1);
+
+INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight) VALUES
+('main','خانه','index.php',NULL,1,1,1),('main','بچگانه','products.php?cat=kids',NULL,2,1,0),('main','کودکان','products.php?cat=boys',NULL,3,1,0),
+('main','نوزاد','products.php?cat=baby',NULL,4,1,0),('main','پسرانه','products.php?cat=boys',NULL,5,1,0),('main','دخترانه','products.php?cat=girls',NULL,6,1,0),
+('main','لباس مجلسی','products.php?cat=formal',NULL,7,1,0),('main','کفش','products.php?cat=shoes',NULL,8,1,0),('main','تماس با ما','help.php#contact',NULL,9,1,0),
+('footer_quick','محصولات پرفروش','products.php?sort=sales',NULL,1,1,0),('footer_quick','تخفیف‌های ویژه','products.php?offer=1',NULL,2,1,0),('footer_quick','مجله مد','blog.php',NULL,3,1,0),('footer_quick','کفش و کتانی','products.php?cat=shoes',NULL,4,1,0),
+('footer_service','راهنمای خرید','help.php#delivery',NULL,1,1,0),('footer_service','شیوه‌های ارسال','help.php#delivery',NULL,2,1,0),('footer_service','پیگیری سفارش','account.php',NULL,3,1,0),('footer_service','سوالات متداول','help.php#faq',NULL,4,1,0),('footer_service','ضمانت بازگشت کالا','help.php#return',NULL,5,1,0);
+INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight)
+SELECT 'main','کت و شلوار','products.php?cat=boys&q=کت',id,1,1,0 FROM theme_menu_items WHERE label='پسرانه' AND location='main' LIMIT 1;
+INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight)
+SELECT 'main','تیشرت','products.php?cat=boys&q=تیشرت',id,2,1,0 FROM theme_menu_items WHERE label='پسرانه' AND location='main' LIMIT 1;
+INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight)
+SELECT 'main','پیراهن مجلسی','products.php?cat=girls&q=پیراهن',id,1,1,0 FROM theme_menu_items WHERE label='دخترانه' AND location='main' LIMIT 1;
+INSERT INTO theme_menu_items (location, label, href, parent_id, sort, enabled, highlight)
+SELECT 'main','سارافون و ست','products.php?cat=formal',id,2,1,0 FROM theme_menu_items WHERE label='دخترانه' AND location='main' LIMIT 1;
+
+INSERT INTO theme_activity (actor, action, detail) VALUES ('سیستم','نصب قالب','قالب «مینی‌مودا مرجع» v2.0.0 فعال شد');
 
 SET FOREIGN_KEY_CHECKS = 1;

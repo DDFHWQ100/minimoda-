@@ -94,6 +94,7 @@ $statuses = ['pending' => ['در انتظار پرداخت', 'st-pending'], 'pro
     <?php foreach (['dashboard' => 'داشبورد', 'products' => 'مدیریت محصولات', 'new' => 'افزودن محصول', 'orders' => 'سفارش‌ها'] as $k => $label): ?>
       <a href="admin.php?tab=<?= e($k) ?>" style="padding:11px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:800;<?= $tab === $k ? 'background:rgba(255,255,255,.14);color:var(--gold)' : 'color:rgba(255,255,255,.8)' ?>"><?= e($label) ?></a>
     <?php endforeach; ?>
+    <a href="admin/index.php" style="padding:11px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:800;color:#1b3a6b;background:#fcd34d">👑 مدیریت قالب و پوسته</a>
     <a href="index.php" style="padding:11px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:800;color:#fcd34d;border:1px dashed rgba(252,211,77,.4)">← بازگشت به فروشگاه</a>
   </aside>
 
