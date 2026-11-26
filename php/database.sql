@@ -409,3 +409,184 @@ INSERT INTO theme_presets (name, description, snapshot, created_by) VALUES
 INSERT INTO theme_activity (actor, action, detail) VALUES ('سیستم','نصب قالب','قالب «مینی‌مودا مرجع» v2.0.0 فعال شد');
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- ══════════════════════════════════════════════════════════════
+-- بخش مدیریت فروشگاه: جداول عملیاتی (قابل اجرای مجدد)
+-- ══════════════════════════════════════════════════════════════
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS discount_codes;
+CREATE TABLE discount_codes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(40) NOT NULL UNIQUE,
+  type VARCHAR(10) NOT NULL DEFAULT 'percent',
+  value INT NOT NULL,
+  min_order INT NOT NULL DEFAULT 0,
+  max_uses INT NOT NULL DEFAULT 100,
+  used_count INT NOT NULL DEFAULT 0,
+  expires_at DATETIME NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS shipping_methods;
+CREATE TABLE shipping_methods (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  cost INT NOT NULL DEFAULT 0,
+  free_over INT NOT NULL DEFAULT 0,
+  eta_days INT NOT NULL DEFAULT 2,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  sort INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS suppliers;
+CREATE TABLE suppliers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  contact_person VARCHAR(80) NOT NULL DEFAULT '',
+  phone VARCHAR(30) NOT NULL DEFAULT '',
+  address VARCHAR(300) NOT NULL DEFAULT '',
+  notes VARCHAR(500) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS returns_requests;
+CREATE TABLE returns_requests (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  order_id INT UNSIGNED NOT NULL,
+  type VARCHAR(10) NOT NULL DEFAULT 'refund',
+  reason VARCHAR(300) NOT NULL DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'requested',
+  note VARCHAR(300) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_returns_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS stock_movements;
+CREATE TABLE stock_movements (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  product_id INT UNSIGNED NULL,
+  delta INT NOT NULL,
+  reason VARCHAR(120) NOT NULL,
+  note VARCHAR(200) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS contact_messages;
+CREATE TABLE contact_messages (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  contact VARCHAR(120) NOT NULL DEFAULT '',
+  subject VARCHAR(160) NOT NULL DEFAULT '',
+  body TEXT NOT NULL,
+  is_read TINYINT(1) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS campaigns;
+CREATE TABLE campaigns (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(160) NOT NULL,
+  slug VARCHAR(120) NOT NULL UNIQUE,
+  description VARCHAR(600) NOT NULL DEFAULT '',
+  banner_image VARCHAR(500) NOT NULL DEFAULT '',
+  start_at DATETIME NULL,
+  end_at DATETIME NULL,
+  discount_code_id INT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS size_charts;
+CREATE TABLE size_charts (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  rows_json TEXT NOT NULL,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS content_pages;
+CREATE TABLE content_pages (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(160) NOT NULL,
+  slug VARCHAR(120) NOT NULL UNIQUE,
+  body TEXT NOT NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS brands;
+CREATE TABLE brands (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(120) NOT NULL UNIQUE,
+  logo VARCHAR(500) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO discount_codes (code, type, value, min_order, max_uses, used_count, expires_at, active) VALUES
+('WELCOME10','percent',10,0,500,128,DATE_ADD(NOW(),INTERVAL 90 DAY),1),
+('NOROOZ25','percent',25,3000000,200,74,DATE_ADD(NOW(),INTERVAL 30 DAY),1),
+('SHIPFREE','fixed',45000,0,1000,342,NULL,1);
+
+INSERT INTO shipping_methods (name, cost, free_over, eta_days, active, sort) VALUES
+('پیک اختصاصی (تهران و کرج)',35000,2000000,1,1,1),
+('تیپاکس',45000,2000000,2,1,2),
+('پست پیشتاز',38000,2000000,3,1,3),
+('باربری (سفارش‌های عمده)',250000,0,4,1,4);
+
+INSERT INTO suppliers (name, contact_person, phone, address, notes) VALUES
+('نساجی پارینه یزد','مهندس شریفی','09132567890','یزد، شهرک صنعتی جهان‌آباد','پارچه‌های پنبه‌ای و فلانل — تحویل هفتگی'),
+('پوشاک کودک آروشا','خانم رحیمی','02144556677','تهران، شهرک صنعتی شمس‌آباد','کالکشن‌های مجلسی؛ ۱۵ روز تسویه'),
+('کفش پاپی‌فیت','آقا توکلی','03133445566','اصفهان، خیابان شیخ بهایی','زیره EVA اختصاصی — MOQ هر سایز ۱۰۰ جفت');
+
+INSERT INTO contact_messages (name, contact, subject, body, is_read) VALUES
+('مریم رضایی','09121234567','سوال درباره سایز','قد دخترم ۱۱۰ سانته؛ برای کاپشن سایز ۶-۷ مناسب است یا ۸-۹؟',0),
+('علی حسینی','ali@example.com','پیگیری سفارش','سفارش MM-00031 هنوز نرسیده ولی وضعیت ارسال‌شده ثبت شده؛ لطفاً پیگیری کنید.',0),
+('زهرا کاظمی','09351112233','درخواست تعویض سایز','ست ملوانی سایز ۸-۹ کوچک بود؛ تعویض با ۱۰-۱۱ ممکن است؟',1),
+('رضا توکلی','reza.t@example.com','فاکتور خرید','برای خرید شرکت‌مان فاکتور رسمی با کد اقتصادی نیاز داریم؛ چطور اقدام کنیم؟',0);
+
+SET @oid := (SELECT id FROM orders ORDER BY id LIMIT 1);
+INSERT INTO returns_requests (order_id, type, reason, status, note) VALUES
+(@oid,'exchange','سایز کوچک بود','requested','تعویض با سایز بالاتر'),
+(@oid,'refund','مغایرت رنگ','approved','بازپرداخت پس از تأیید انبار');
+
+INSERT INTO stock_movements (product_id, delta, reason, note) VALUES
+(NULL,0,'شمارش دوره‌ای','انبارگردانی فصلی با دقت ۹۸٪ انجام شد'),
+((SELECT id FROM products WHERE slug='havana-pink-coat' LIMIT 1),50,'ورود از تأمین‌کننده','محموله نساجی پارینه یزد'),
+((SELECT id FROM products WHERE slug='redwall-sport-tee' LIMIT 1),-12,'فروش','خروج خودکار از سفارش‌های وب');
+
+INSERT INTO campaigns (title, slug, description, banner_image, start_at, end_at, discount_code_id, active) VALUES
+('جشنواره بهاره مینی‌مودا','spring-festival','تا ۶۰٪ تخفیف روی کالکشن جدید بهاره؛ پیراهن‌های مجلسی، کاپشن‌های سبک و ست‌های ملوانی.','https://images.pexels.com/photos/1620759/pexels-photo-1620759.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1200',DATE_SUB(NOW(),INTERVAL 10 DAY),DATE_ADD(NOW(),INTERVAL 20 DAY),(SELECT id FROM discount_codes WHERE code='NOROOZ25' LIMIT 1),1),
+('شروع سال تحصیلی','back-to-school','کتانی و ست‌های مدرسه با کد تخفیف خوش‌آمد؛ آماده‌سازی برای بازگشت به کلاس.','https://images.pexels.com/photos/9537104/pexels-photo-9537104.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=700&w=1200',DATE_ADD(NOW(),INTERVAL 5 DAY),DATE_ADD(NOW(),INTERVAL 45 DAY),(SELECT id FROM discount_codes WHERE code='WELCOME10' LIMIT 1),1);
+
+INSERT INTO size_charts (name, rows_json, active) VALUES
+('جدول سایزبندی کودک (۲ تا ۱۱ سال)','[{"size":"2-3","height":"92-98","chest":"56-58","waist":"50-52"},{"size":"4-5","height":"104-110","chest":"60-62","waist":"54-56"},{"size":"6-7","height":"116-122","chest":"64-66","waist":"58-60"},{"size":"8-9","height":"128-134","chest":"68-70","waist":"62-64"},{"size":"10-11","height":"140-146","chest":"72-74","waist":"66-68"}]',1),
+('جدول سایزبندی نوزاد (۰ تا ۲۴ ماه)','[{"size":"0-6m","height":"62-68","chest":"44-46","waist":"42-44"},{"size":"6-12m","height":"74-80","chest":"48-50","waist":"46-48"},{"size":"12-24m","height":"86-92","chest":"52-54","waist":"50-52"}]',1);
+
+INSERT INTO content_pages (title, slug, body) VALUES
+('درباره مینی‌مودا','about','مینی‌مودا فروشگاه آنلاین تخصصی مد و پوشاک کودک و نوزاد است که از سال ۱۳۹۸ با هدف ارائه لباس‌های باکیفیت، اصل و خوش‌قیمت به خانواده‌های ایرانی آغاز به کار کرده است.
+
+ما معتقدیم کودکان سزاوار بهترین‌ها هستند؛ به همین دلیل تمام محصولاتمان را از برندهای معتبر و کارگاه‌های باسابقه تهیه می‌کنیم، پیش از عرضه کیفیت هر کالا را بررسی می‌کنیم و با ضمانت اصالت و سلامت فیزیکی کالا به دست شما می‌رسانیم.
+
+تیم مینی‌مودا در تهران مستقر است و با پشتیبانی پاسخگو در تمام روزهای هفته همراه شماست.'),
+('قوانین و مقررات','terms','۱) تمامی محصولات مینی‌مودا دارای ضمانت اصالت کالا هستند.
+۲) سفارش‌های بالای ۲ میلیون تومان شامل ارسال رایگان می‌شوند.
+۳) تا ۷ روز پس از تحویل، امکان بازگشت کالا با ارائه فاکتور و برچسب سلامت وجود دارد.
+۴) در صورت مغایرت یا ایراد کالا، هزینه ارسال برگشت با فروشگاه است.
+۵) پرداخت آنلاین از طریق درگاه رسمی بانکی انجام می‌شود و هیچ اطلاعات کارتی ذخیره نمی‌گردد.'),
+('حریم خصوصی','privacy','اطلاعات شخصی شما (نام، موبایل، آدرس) صرفاً برای انجام سفارش و هماهنگی ارسال استفاده می‌شود و هرگز با اشخاص ثالث به اشتراک گذاشته نمی‌شود.
+
+رمز عبور حساب کاربری شما با الگوریتم‌های امن رمزنگاری می‌شود و هیچ‌کس — حتی مدیران فروشگاه — به آن دسترسی ندارد.
+
+در صورت نیاز به تغییر یا حذف اطلاعات حساب، کافی است با پشتیبانی تماس بگیرید.');
+
+INSERT INTO brands (name, slug, logo) VALUES
+('مینی‌مودا (برند اختصاصی)','minimoda',''),
+('آروشا','arusha',''),
+('پاپی‌فیت','papyfit',''),
+('نساجی پارینه','parineh','');
+
+SET FOREIGN_KEY_CHECKS = 1;

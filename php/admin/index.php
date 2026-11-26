@@ -4,6 +4,7 @@
 //  مسیر: /admin/  (مثلاً http://localhost/minimoda/admin/)
 // ══════════════════════════════════════════════════════════════
 require dirname(__DIR__) . '/bootstrap.php';
+require __DIR__ . '/shop-lib.php';
 $pdo = db();
 
 // ── گارد مدیر ────────────────────────────────────────────────
@@ -21,7 +22,9 @@ catch (Throwable $ex) {
 
 $tab = preg_replace('/[^a-z_]/', '', (string) ($_GET['tab'] ?? 'overview')) ?: 'overview';
 $groups = [
-    'نمای کلی'        => ['overview' => ['نمای کلی', '▦']],
+    'نمای کلی'        => ['overview' => ['نمای کلی', '▦'], 'shop_dashboard' => ['داشبورد اصلی', '▦']],
+    'فروشگاه'         => ['shop_orders' => ['سفارش‌ها', '🧾'], 'shop_products' => ['محصولات', '📦'], 'shop_inventory' => ['انبار و موجودی', '🏭'], 'shop_customers' => ['مشتریان', '👥'], 'shop_discounts' => ['تخفیف‌ها و کدها', '٪'], 'shop_campaigns' => ['کمپین‌ها', '📣'], 'shop_shipping' => ['ارسال و حمل‌ونقل', '🚚'], 'shop_returns' => ['مرجوعی و تعویض', '↩'], 'shop_transactions' => ['امور مالی', '💰'], 'shop_reports' => ['گزارش‌ها و تحلیل', '📊']],
+    'کاتالوگ و محتوا' => ['shop_sizecharts' => ['جدول سایزبندی', '📏'], 'shop_brands' => ['برندها', '🏷'], 'shop_suppliers' => ['تأمین‌کنندگان', '🤝'], 'shop_reviews' => ['نظرات و امتیازها', '⭐'], 'shop_messages' => ['پیام‌ها و پشتیبانی', '✉'], 'shop_blog' => ['بلاگ و مجله مد', '📰'], 'shop_pages' => ['صفحات محتوا', '📄'], 'shop_users' => ['کاربران و دسترسی‌ها', '🔐']],
     'قالب‌ها'          => ['themes' => ['مدیریت قالب‌ها', '◫'], 'install' => ['افزودن قالب', '＋'], 'code' => ['ویرایشگر قالب', '</>']],
     'پوسته و صفحات'   => ['sections' => ['مدیریت پوسته', '☰'], 'pages' => ['مدیریت صفحات', '▤'], 'presets' => ['الگوهای آماده', '▦'], 'hero' => ['هدر و فوتر', '▭'], 'menus' => ['منوها و ابزارک‌ها', '≡'], 'banners' => ['بنرها و اسلایدر', '▣']],
     'ظاهر'            => ['appearance' => ['تنظیمات ظاهری', '◧'], 'design' => ['رنگ‌ها و فونت‌ها', '◐'], 'assets' => ['مدیریت فایل‌ها', '▧'], 'responsive' => ['تنظیمات واکنش‌گرا', '▯']],
@@ -280,6 +283,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
             case 'clear_activity': { $pdo->exec('DELETE FROM theme_activity WHERE created_at < NOW() - INTERVAL 30 DAY'); flash('گزارش‌های قدیمی پاک شد'); break; }
+            default: shopHandlePost();
         }
     } catch (Throwable $ex) {
         flash('خطا: ' . $ex->getMessage(), 'error');
@@ -316,7 +320,7 @@ $pageTitle = 'پنل مدیریت قالب | ' . $tabs[$tab][0];
           <a href="index.php?tab=<?= $k ?>" class="<?= $tab === $k ? 'is-active' : '' ?>"><span class="adm-ic"><?= $icon ?></span><?= e($label) ?><?php if ($k === 'notices' && $unreadNotices): ?><em class="adm-badge"><?= $unreadNotices ?></em><?php endif; ?></a>
         <?php endforeach; ?>
       <?php endforeach; ?>
-      <a href="../admin.php" class="adm-muted">← پنل فروشگاه (محصول/سفارش)</a>
+      <a href="../admin.php" class="adm-muted">← پنل فروشگاه قبلی (قدیمی)</a>
       <a href="../index.php" target="_blank" class="adm-muted">↗ مشاهده سایت</a>
     </nav>
   </aside>
