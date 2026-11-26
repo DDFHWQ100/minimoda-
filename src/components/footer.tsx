@@ -7,7 +7,28 @@ import {
   CheckCircle2, Loader2, Heart, Sparkles,
 } from "lucide-react";
 
-export default function Footer({ storeName = "مینی‌مودا", tagline = "مد و پوشاک کودک و نوزاد" }: { storeName?: string; tagline?: string }) {
+type FooterLink = { label: string; href: string };
+export default function Footer({
+  storeName = "مینی‌مودا", tagline = "مد و پوشاک کودک و نوزاد",
+  about, quickLinks, serviceLinks, instagram, telegram, phone, copyright, showTrustBadges = true,
+}: {
+  storeName?: string; tagline?: string; about?: string;
+  quickLinks?: FooterLink[]; serviceLinks?: FooterLink[];
+  instagram?: string; telegram?: string; phone?: string; copyright?: string; showTrustBadges?: boolean;
+}) {
+  const quick: FooterLink[] = quickLinks && quickLinks.length ? quickLinks : [
+    { label: "محصولات پرفروش", href: "/products?sort=sales" }, { label: "تخفیف‌های ویژه", href: "/products?offer=1" },
+    { label: "مجله مد", href: "/blog" }, { label: "لباس مجلسی", href: "/products?cat=formal" },
+    { label: "کفش و کتانی", href: "/products?cat=shoes" }, { label: "نوزاد", href: "/products?cat=baby" },
+  ];
+  const service: FooterLink[] = serviceLinks && serviceLinks.length ? serviceLinks : [
+    { label: "راهنمای خرید", href: "/help#delivery" }, { label: "شیوه‌های ارسال", href: "/help#delivery" },
+    { label: "پیگیری سفارش", href: "/orders" }, { label: "سوالات متداول", href: "/help#faq" },
+    { label: "ضمانت بازگشت کالا", href: "/help#return" }, { label: "تماس با ما", href: "/help#contact" },
+  ];
+  const ig = instagram ?? "https://www.instagram.com/minimoda.ir";
+  const tg = telegram ?? "https://t.me/minimoda_ir";
+  const tel = phone ?? "021-88766554";
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
 
@@ -44,12 +65,12 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
             </span>
           </Link>
           <p className="mt-3 text-white/60 leading-6">
-            {storeName}، فروشگاه اینترنتی {tagline} — کیفیت و جدیدترین مدل‌ها با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.
+{about ?? `${storeName}، فروشگاه اینترنتی ${tagline} — کیفیت و جدیدترین مدل‌ها با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.`}
           </p>
           <div className="flex items-center gap-2 mt-4">
-            <a href="https://www.instagram.com/minimoda.ir" target="_blank" rel="noreferrer" aria-label="اینستاگرام" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-pink-500 transition"><AtSign className="h-4 w-4 text-white" /></a>
-            <a href="https://t.me/minimoda_ir" target="_blank" rel="noreferrer" aria-label="تلگرام" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-sky-500 transition"><Send className="h-4 w-4 text-white" /></a>
-            <a href="tel:02188766554" aria-label="تلفن" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-emerald-500 transition"><Phone className="h-4 w-4 text-white" /></a>
+            <a href={ig} target="_blank" rel="noreferrer" aria-label="اینستاگرام" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-pink-500 transition"><AtSign className="h-4 w-4 text-white" /></a>
+            <a href={tg} target="_blank" rel="noreferrer" aria-label="تلگرام" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-sky-500 transition"><Send className="h-4 w-4 text-white" /></a>
+            <a href={`tel:${tel.replace(/\D/g, "")}`} aria-label="تلفن" className="h-9 w-9 grid place-items-center rounded-full bg-white/10 hover:bg-emerald-500 transition"><Phone className="h-4 w-4 text-white" /></a>
           </div>
         </div>
 
@@ -57,12 +78,7 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
         <div>
           <h4 className="text-white font-black mb-3 text-[13px] flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-amber-400" /> دسترسی سریع</h4>
           <ul className="space-y-2 text-white/65">
-            <li><Link href="/products?sort=sales" className="hover:text-amber-300 transition">محصولات پرفروش</Link></li>
-            <li><Link href="/products?offer=1" className="hover:text-amber-300 transition">تخفیف‌های ویژه</Link></li>
-            <li><Link href="/blog" className="hover:text-amber-300 transition">مجله مد</Link></li>
-            <li><Link href="/products?cat=formal" className="hover:text-amber-300 transition">لباس مجلسی</Link></li>
-            <li><Link href="/products?cat=shoes" className="hover:text-amber-300 transition">کفش و کتانی</Link></li>
-            <li><Link href="/products?cat=baby" className="hover:text-amber-300 transition">نوزاد</Link></li>
+            {quick.map((l) => <li key={l.label + l.href}><Link href={l.href} className="hover:text-amber-300 transition">{l.label}</Link></li>)}
           </ul>
         </div>
 
@@ -70,12 +86,7 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
         <div>
           <h4 className="text-white font-black mb-3 text-[13px] flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-amber-400" /> خدمات مشتریان</h4>
           <ul className="space-y-2 text-white/65">
-            <li><Link href="/help#delivery" className="hover:text-amber-300 transition">راهنمای خرید</Link></li>
-            <li><Link href="/help#delivery" className="hover:text-amber-300 transition">شیوه‌های ارسال</Link></li>
-            <li><Link href="/orders" className="hover:text-amber-300 transition">پیگیری سفارش</Link></li>
-            <li><Link href="/help#faq" className="hover:text-amber-300 transition">سوالات متداول</Link></li>
-            <li><Link href="/help#return" className="hover:text-amber-300 transition">ضمانت بازگشت کالا</Link></li>
-            <li><Link href="/help#contact" className="hover:text-amber-300 transition">تماس با ما</Link></li>
+            {service.map((l) => <li key={l.label + l.href}><Link href={l.href} className="hover:text-amber-300 transition">{l.label}</Link></li>)}
           </ul>
         </div>
 
@@ -99,6 +110,7 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
               {state === "error" && <p className="mt-2 text-rose-300 text-[10px]">این ایمیل قبلاً ثبت شده یا نامعتبر است.</p>}
             </form>
           )}
+          {showTrustBadges && (
           <div className="flex items-center gap-2 mt-4">
             <div className="flex flex-col items-center justify-center h-14 px-3 rounded-xl border border-white/20 bg-white/5">
               <ShieldCheck className="h-5 w-5 text-emerald-400" />
@@ -109,6 +121,7 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
               <span className="text-[8px] text-white/70 mt-1">ساماندهی رسانه</span>
             </div>
           </div>
+          )}
         </div>
       </div>
 
@@ -120,7 +133,7 @@ export default function Footer({ storeName = "مینی‌مودا", tagline = "�
             <span className="text-white/20">|</span>
             <Link href="/pages/privacy" className="hover:text-white transition">حریم خصوصی</Link>
           </div>
-          <p>© ۱۴۰۴ {storeName} — کلیه حقوق محفوظ است</p>
+          <p>{copyright ?? `© ۱۴۰۴ ${storeName} — کلیه حقوق محفوظ است`}</p>
         </div>
       </div>
     </footer>

@@ -314,6 +314,45 @@ export const contentPages = pgTable("content_pages", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// ═══════════ تکمیل مدیریت قالب: منوها، ابزارک‌ها، پاپ‌آپ، الگوهای چیدمان، تاریخچه کد ═══════════
+export const menuItems = pgTable("menu_items", {
+  id: serial("id").primaryKey(),
+  location: text("location").notNull().default("main"), // main | footer_quick | footer_service
+  label: text("label").notNull(),
+  href: text("href").notNull().default("/"),
+  parentId: integer("parent_id"),
+  sort: integer("sort").notNull().default(0),
+  enabled: boolean("enabled").notNull().default(true),
+  highlight: boolean("highlight").notNull().default(false),
+});
+
+export const widgets = pgTable("widgets", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // popup | announcement | trust_badge | contact_block
+  title: text("title").notNull(),
+  config: text("config").notNull().default("{}"),
+  enabled: boolean("enabled").notNull().default(true),
+  sort: integer("sort").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const layoutPresets = pgTable("layout_presets", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  snapshot: text("snapshot").notNull(), // JSON: sections order/enabled + design tokens
+  createdBy: text("created_by").notNull().default("admin"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const codeHistory = pgTable("code_history", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull(), // custom.css | custom.js | custom.head
+  content: text("content").notNull().default(""),
+  createdBy: text("created_by").notNull().default("admin"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const brands = pgTable("brands", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),

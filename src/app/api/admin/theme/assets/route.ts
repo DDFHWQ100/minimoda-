@@ -4,6 +4,8 @@ import path from "path";
 import { randomBytes } from "crypto";
 import { getSessionUser } from "@/lib/auth";
 import { logActivity } from "@/lib/theme";
+import { db } from "@/db";
+import { products, banners, blogPosts, themes, themeSettings, categories } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +65,25 @@ export async function GET() {
   ]);
   const all = [...uploads, ...images, ...downloads].sort((a, b) => b.modified.localeCompare(a.modified));
   const totalBytes = all.reduce((s, f) => s + f.size, 0);
-  return NextResponse.json({ files: all, totalBytes, count: all.length });
+
+  // تشخیص فایل‌های استفاده‌نشده: مسیر فایل در هیچ رکورد دیتابیسی (محصول/بنر/بلاگ/قالب/تنظیمات/دسته) نیامده باشد
+  let used = new Set<string>();
+  try {
+    const [p, b, bl, th, st, ct] = await Promise.all([
+      db.select({ v: products.images }).from(products),
+      db.select({ v: banners.image }).from(banners),
+      db.select({ v: blogPosts.image }).from(blogPosts),
+      db.select({ v: themes.preview }).from(themes),
+      db.select({ v: themeSettings.value }).from(themeSettings),
+      db.select({ v: categories.image }).from(categories),
+    ]);
+    const blob = [...p, ...b, ...bl, ...th, ...st, ...ct].map((r) => r.v ?? "").join("\n");
+    used = new Set(all.filter((f) => blob.includes(f.path) || blob.includes("/" + f.path) || blob.includes(f.name)).map((f) => f.path));
+  } catch { /* اگر دیتابیس در دسترس نبود، همه را استفاده‌شده فرض کن */ used = new Set(all.map((f) => f.path)); }
+
+  const files = all.map((f) => ({ ...f, used: used.has(f.path) || f.path.startsWith("downloads/") || f.path.startsWith("images/") }));
+  const unusedCount = files.filter((f) => !f.used).length;
+  return NextResponse.json({ files, totalBytes, count: all.length, unusedCount });
 }
 
 export async function POST(req: Request) {

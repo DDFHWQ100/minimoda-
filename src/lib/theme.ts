@@ -8,6 +8,8 @@ import {
   banners,
   activityLogs,
   revisions,
+  menuItems,
+  widgets,
 } from "@/db/schema";
 
 /* ═══════════════════════════════════════════════
@@ -27,17 +29,41 @@ export const getThemeSettings = cache(async (): Promise<ThemeSettingsMap> => {
   }
 });
 
+export type MenuItemRow = typeof menuItems.$inferSelect;
+export type WidgetRow = typeof widgets.$inferSelect;
+
 export const getThemeBundle = cache(async () => {
-  const [settings, themeRows, sectionRows, bannerRows] = await Promise.all([
+  const [settings, themeRows, sectionRows, bannerRows, menuRows, widgetRows] = await Promise.all([
     getThemeSettings(),
     db.select().from(themes).orderBy(asc(themes.id)).catch(() => []),
     db.select().from(homepageSections).orderBy(asc(homepageSections.sort)).catch(() => []),
     db.select().from(banners).orderBy(asc(banners.sort)).catch(() => []),
+    db.select().from(menuItems).orderBy(asc(menuItems.sort), asc(menuItems.id)).catch(() => []),
+    db.select().from(widgets).orderBy(asc(widgets.sort)).catch(() => []),
   ]);
   const list = themeRows as (typeof themes.$inferSelect)[];
   const activeTheme = list.find((t) => t.isActive) ?? null;
-  return { settings, themes: list, sections: sectionRows as (typeof homepageSections.$inferSelect)[], banners: bannerRows as (typeof banners.$inferSelect)[], activeTheme };
+  return {
+    settings,
+    themes: list,
+    sections: sectionRows as (typeof homepageSections.$inferSelect)[],
+    banners: bannerRows as (typeof banners.$inferSelect)[],
+    menus: menuRows as MenuItemRow[],
+    widgets: widgetRows as WidgetRow[],
+    activeTheme,
+  };
 });
+
+/** منوی درختی برای یک مکان (main / footer_quick / footer_service) */
+export type NavNode = { id: number; label: string; href: string; highlight: boolean; sub: { label: string; href: string }[] };
+export function buildNav(menus: MenuItemRow[], location: string): NavNode[] {
+  const items = menus.filter((m) => m.location === location && m.enabled);
+  const roots = items.filter((m) => !m.parentId);
+  return roots.map((r) => ({
+    id: r.id, label: r.label, href: r.href, highlight: r.highlight,
+    sub: items.filter((c) => c.parentId === r.id).map((c) => ({ label: c.label, href: c.href })),
+  }));
+}
 
 export function settingBool(settings: ThemeSettingsMap, key: string, fallback = false): boolean {
   const v = settings[key];
@@ -163,8 +189,27 @@ export function themeCssVariables(settings: ThemeSettingsMap): string {
   const gold = settings["theme.gold"] ?? "#ffc107";
   const radius = Number(settings["theme.radius"] ?? "20") || 20;
   const font = settings["theme.font"] ?? "Vazirmatn";
-  return `:root{--brand-primary:${primary};--brand-accent:${accent};--brand-gold:${gold};--brand-radius:${radius}px}`
-    + `body{font-family:'${font}',Tahoma,'Segoe UI',sans-serif}`;
+  const fontSize = Number(settings["design.font_size_base"] ?? "14") || 14;
+  const headingWeight = Number(settings["design.font_weight_heading"] ?? "900") || 900;
+  const contentWidth = Number(settings["design.content_width"] ?? "1280") || 1280;
+  const gap = Number(settings["design.section_gap"] ?? "24") || 24;
+  const bg = settings["design.bg_color"] ?? "#f3f4f8";
+  const shadowLevel = settings["design.shadow"] ?? "soft";
+  const shadow = shadowLevel === "none" ? "none" : shadowLevel === "strong" ? "0 18px 40px -12px rgba(20,38,74,.35)" : "0 10px 30px -12px rgba(20,38,74,.25)";
+  const animations = settings["design.animations"] !== "false";
+  const transition = Number(settings["design.transition_ms"] ?? "250") || 250;
+  const colsMobile = settings["responsive.product_cols_mobile"] === "1" ? 1 : 2;
+  let css = `:root{--brand-primary:${primary};--brand-accent:${accent};--brand-gold:${gold};--brand-radius:${radius}px;--site-width:${contentWidth}px;--section-gap:${gap}px;--site-bg:${bg};--card-shadow:${shadow};--transition-ms:${transition}ms;--mobile-cols:${colsMobile}}`;
+  css += `body{font-family:'${font}',Tahoma,'Segoe UI',sans-serif;font-size:${fontSize}px;background:${bg}}`;
+  css += `h1,h2,h3{font-weight:${headingWeight}}`;
+  css += `.max-w-7xl{max-width:${contentWidth}px}`;
+  if (!animations) css += `*,*::before,*::after{animation:none!important;transition:none!important}`;
+  if (settings["responsive.hide_banners_mobile"] === "true") css += `@media (max-width:640px){[data-section="banners"]{display:none!important}}`;
+  if (settings["responsive.hide_trust_mobile"] === "true") css += `@media (max-width:640px){[data-section="trust"]{display:none!important}}`;
+  if (settings["responsive.hide_blog_mobile"] === "true") css += `@media (max-width:640px){[data-section="blog"]{display:none!important}}`;
+  if (settings["responsive.hide_duo_tablet"] === "true") css += `@media (min-width:641px) and (max-width:1024px){[data-section="duo"]{display:none!important}}`;
+  if (colsMobile === 1) css += `@media (max-width:640px){[data-section="products"] .grid-cols-2{grid-template-columns:1fr!important}}`;
+  return css;
 }
 
 /** پیوند فونت گوگل متناسب با انتخاب تنظیمات */

@@ -32,6 +32,7 @@ function inputString(array $src, string $key, string $default = ''): string {
 }
 
 require __DIR__ . '/config.php';
+require __DIR__ . '/theme.php';
 
 // ── اتصال PDO به MySQL ───────────────────────────────────────
 function db(): PDO {

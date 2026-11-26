@@ -118,7 +118,7 @@ export default async function HomePage() {
 
       {/* ═══ بنرهای تبلیغاتی ۴ تایی (از دیتابیس — قابل مدیریت در پنل قالب) ═══ */}
       {show("banners") && (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 mt-4 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <div data-section="banners" className="mx-auto max-w-7xl px-3 sm:px-4 mt-4 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         {promoBanners.map((b) => (
           <Link
             key={b.title}
@@ -139,7 +139,7 @@ export default async function HomePage() {
 
       {/* ═══ محبوب‌ترین‌ها ═══ */}
       {show("products") && (
-      <section className="mx-auto max-w-7xl px-3 sm:px-4 mt-8">
+      <section data-section="products" className="mx-auto max-w-7xl px-3 sm:px-4 mt-8">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="flex items-center gap-2 text-lg sm:text-2xl font-black text-[#1b3a6b]">
@@ -189,7 +189,7 @@ export default async function HomePage() {
 
       {/* ═══ نوار اعتماد ═══ */}
       {show("trust") && (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 mt-6">
+      <div data-section="trust" className="mx-auto max-w-7xl px-3 sm:px-4 mt-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 rounded-[20px] border border-slate-200/80 bg-white p-2 sm:p-3 shadow-sm">
           {[
             { icon: Headphones, t: "پشتیبانی سریع", d: "پاسخگویی ۲۴ ساعته" },
@@ -214,7 +214,7 @@ export default async function HomePage() {
 
       {/* ═══ مجله + بنر میانی + ست‌های پیشنهادی ═══ */}
       {show("blog") && (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 mt-8 grid lg:grid-cols-3 gap-4">
+      <div data-section="blog" className="mx-auto max-w-7xl px-3 sm:px-4 mt-8 grid lg:grid-cols-3 gap-4">
         {/* آخرین مقالات مجله */}
         <section className="rounded-[24px] border border-slate-200/80 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
@@ -297,7 +297,7 @@ export default async function HomePage() {
 
       {/* ═══ بنرهای دوگانه پایین ═══ */}
       {show("duo") && (
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 mt-8 grid md:grid-cols-2 gap-3">
+      <div data-section="duo" className="mx-auto max-w-7xl px-3 sm:px-4 mt-8 grid md:grid-cols-2 gap-3">
         <Link href="/products?cat=kids" className="relative h-44 sm:h-56 rounded-[24px] overflow-hidden group shadow-md">
           <Image src={PX("28246503", 1000, 650)} alt="Breezy Styles Bright Days" fill sizes="(max-width:768px) 100vw, 50vw" className="object-cover object-[50%_20%] group-hover:scale-105 transition-transform duration-1000" />
           <div className="absolute inset-0 bg-gradient-to-l from-[#0e2a47]/85 via-[#0e2a47]/35 to-transparent" />

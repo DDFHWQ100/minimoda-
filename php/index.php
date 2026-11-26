@@ -26,20 +26,21 @@ include __DIR__ . '/partials/header.php';
 <div class="wrap">
 
   <!-- ═══ هیرو ═══ -->
+  <?php if (themeSectionOn('hero')): ?>
   <section class="hero" id="hero" aria-label="پیشنهادهای ویژه">
     <div class="hero-slide is-active">
-      <img src="assets/images/ref-hero.jpg" alt="استایل خاص برای نسل خاص" fetchpriority="high">
+      <img src="<?= e(themeGet('hero.image', 'assets/images/ref-hero.jpg')) ?>" alt="<?= e(strip_tags(themeGet('hero.title', 'استایل خاص برای نسل خاص'))) ?>" fetchpriority="high">
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <span class="hero-eyebrow">کالکشن جدید ۲۰۲۶</span>
-        <h1 class="hero-title">استایل خاص<br>برای نسل خاص!</h1>
-        <p class="hero-sub">جدیدترین کالکشن لباس کودک و نوجوان</p>
+        <h1 class="hero-title"><?= strip_tags(themeGet('hero.title', 'استایل خاص<br>برای نسل خاص!'), '<br>') ?></h1>
+        <p class="hero-sub"><?= e(themeGet('hero.sub', 'جدیدترین کالکشن لباس کودک و نوجوان')) ?></p>
         <div class="hero-cta-row">
-          <a class="btn btn-primary" href="products.php?cat=formal" style="height:44px;padding:0 24px;font-size:12px;border-radius:99px">مشاهده مجموعه <?= $arrow ?></a>
+          <a class="btn btn-primary" href="<?= e(themeGet('hero.href', 'products.php?cat=formal')) ?>" style="height:44px;padding:0 24px;font-size:12px;border-radius:99px"><?= e(themeGet('hero.cta', 'مشاهده مجموعه')) ?> <?= $arrow ?></a>
           <span class="hero-latin">Be Happy :)</span>
         </div>
       </div>
-      <span class="hero-badge"><b>۷۰٪</b><small>تا تخفیف</small></span>
+      <span class="hero-badge"><b><?= e(themeGet('hero.badge', '۷۰٪')) ?></b><small>تا تخفیف</small></span>
     </div>
     <div class="hero-slide">
       <img src="<?= $PX('5088176', 1600, 900) ?>" alt="ست‌های ملوانی">
@@ -71,8 +72,10 @@ include __DIR__ . '/partials/header.php';
       <button class="hero-dot" aria-label="اسلاید ۳"></button>
     </div>
   </section>
+  <?php endif; ?>
 
   <!-- ═══ دسته‌بندی‌های گرد ═══ -->
+  <?php if (themeSectionOn('categories')): ?>
   <div class="cat-row">
     <?php foreach ($cats as $c): $icon = $catIcons[$c['icon']] ?? $catIcons['Shirt']; ?>
       <a class="cat-item" href="products.php?cat=<?= e($c['slug']) ?>">
@@ -81,15 +84,17 @@ include __DIR__ . '/partials/header.php';
       </a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
-  <!-- ═══ بنرهای تبلیغاتی ۴ تایی ═══ -->
+  <!-- ═══ بنرهای تبلیغاتی ۴ تایی (قابل مدیریت از پنل قالب) ═══ -->
+  <?php if (themeSectionOn('banners')): ?>
   <div class="promo-grid">
-    <?php foreach ([
+    <?php $dbBanners = themeBanners(); $promo = $dbBanners ? array_map(fn($b) => ['img' => $b['image'], 'tag' => $b['subtitle'], 'title' => $b['title'], 'href' => $b['href']], $dbBanners) : [
       ['img' => $PX('29224161', 1000, 700), 'tag' => 'تا ۳۰٪ تخفیف', 'title' => 'کاپشن‌های زمستانی', 'href' => 'products.php?cat=kids&q=' . urlencode('کاپشن')],
       ['img' => $PX('33939726', 1000, 700), 'tag' => 'کالکشن سلطنتی', 'title' => 'پیراهن‌های مجلسی', 'href' => 'products.php?cat=formal'],
       ['img' => $PX('9537104', 1000, 700), 'tag' => 'ضد لغزش و سبک', 'title' => 'کتانی‌های ورزشی', 'href' => 'products.php?cat=shoes'],
       ['img' => $PX('30690921', 1000, 700), 'tag' => 'ست کامل رسمی', 'title' => 'کت و شلوار پسرانه', 'href' => 'products.php?cat=boys&q=' . urlencode('کت')],
-    ] as $b): ?>
+    ]; foreach ($promo as $b): ?>
       <a class="promo-card" href="<?= e($b['href']) ?>">
         <img src="<?= e($b['img']) ?>" alt="<?= e($b['title']) ?>" loading="lazy">
         <div class="promo-overlay"></div>
@@ -97,8 +102,10 @@ include __DIR__ . '/partials/header.php';
       </a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ محبوب‌ترین‌ها ═══ -->
+  <?php if (themeSectionOn('popular')): ?>
   <div class="sec-head">
     <div>
       <h2 class="sec-title"><svg viewBox="0 0 24 24" width="22" height="22" fill="var(--pink)" stroke="var(--pink)" stroke-width="1.5" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> محبوب‌ترین‌ها</h2>
@@ -107,8 +114,10 @@ include __DIR__ . '/partials/header.php';
     <a class="sec-link" href="products.php?sort=sales">همه ←</a>
   </div>
   <div class="grid-products" style="display:grid"><?php foreach ($bestsellers as $p) renderProductCard($p); ?></div>
+  <?php endif; ?>
 
   <!-- ═══ سه بنر کالکشن ═══ -->
+  <?php if (themeSectionOn('trio')): ?>
   <div class="trio-grid">
     <?php foreach ([
       ['img' => $PX('29224161', 900, 650), 'latin' => 'New Arrivals', 'title' => 'جدیدترین محصولات', 'cta' => 'مشاهده کنید', 'href' => 'products.php?cat=kids', 'tone' => 'rgba(27,58,107,.82)', 'accent' => '#fcd34d'],
@@ -126,8 +135,10 @@ include __DIR__ . '/partials/header.php';
       </a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ نوار اعتماد ═══ -->
+  <?php if (themeSectionOn('trust')): ?>
   <div class="trust-row">
     <?php foreach ([
       ['پشتیبانی سریع', 'پاسخگویی ۲۴ ساعته', '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1H4z"/><path d="M20 14a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h1z"/>'],
@@ -142,8 +153,10 @@ include __DIR__ . '/partials/header.php';
       </div>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ مجله + بنر میانی + ست‌های پیشنهادی ═══ -->
+  <?php if (themeSectionOn('magazine')): ?>
   <div class="mag-grid">
     <section class="panel">
       <div class="sec-head" style="margin:0 0 6px"><h3 style="margin:0;font-size:13px;color:var(--navy)">آخرین مقالات مجله</h3><a class="sec-link" href="blog.php">همه ←</a></div>
@@ -173,8 +186,10 @@ include __DIR__ . '/partials/header.php';
       <a class="btn btn-primary" href="products.php" style="height:42px;margin-top:10px;font-size:11px;border-radius:14px">♥ ست کامل با قیمت ویژه</a>
     </section>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ جدیدترین اخبار مد و پوشاک ═══ -->
+  <?php if (themeSectionOn('news')): ?>
   <div class="sec-head">
     <h2 class="sec-title">جدیدترین اخبار مد و پوشاک</h2>
     <a class="sec-link" href="blog.php">همه مقالات ←</a>
@@ -190,8 +205,10 @@ include __DIR__ . '/partials/header.php';
       </a>
     <?php endforeach; ?>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ بنرهای دوگانه پایین ═══ -->
+  <?php if (themeSectionOn('duo')): ?>
   <div class="duo-banners">
     <a class="duo duo-a" href="products.php?cat=kids">
       <img src="<?= $PX('28246503', 1000, 650) ?>" alt="Breezy Styles Bright Days" loading="lazy">
@@ -204,8 +221,10 @@ include __DIR__ . '/partials/header.php';
       <div class="duo-body"><small>تخفیف ویژه</small><h3>تا ۵۰٪ تخفیف<br>روی منتخبات</h3><span class="btn btn-primary" style="height:36px;padding:0 16px;font-size:10px;width:max-content;border-radius:99px">همین حالا خرید کنید <?= $arrow ?></span></div>
     </a>
   </div>
+  <?php endif; ?>
 
   <!-- ═══ تب محصولات ═══ -->
+  <?php if (themeSectionOn('tabs')): ?>
   <div data-tabs>
     <div class="sec-head">
       <h2 class="sec-title">دیدنی‌ترین‌های مینی‌مودا</h2>
@@ -219,6 +238,7 @@ include __DIR__ . '/partials/header.php';
     <div class="tab-panel grid-products" data-tab-panel="offers"><?php foreach ($offers as $p) renderProductCard($p); ?></div>
     <div class="tab-panel grid-products" data-tab-panel="fresh"><?php foreach ($fresh as $p) renderProductCard($p); ?></div>
   </div>
+  <?php endif; ?>
 
 </div><!-- /wrap -->
 <?php include __DIR__ . '/partials/footer.php'; ?>

@@ -11,7 +11,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { themes } from "@/db/schema";
 import { getSessionUser, isAdminDemoOpen } from "@/lib/auth";
-import { getThemeBundle, themeCssVariables, fontLinkFor, settingBool } from "@/lib/theme";
+import { getThemeBundle, themeCssVariables, fontLinkFor, settingBool, buildNav } from "@/lib/theme";
+import PopupWidget from "@/components/popup-widget";
 
 export async function generateMetadata(): Promise<Metadata> {
   const bundle = await getThemeBundle().catch(() => null);
@@ -124,6 +125,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link href={fontLinkFor(s["theme.font"])} rel="stylesheet" />
         {/* توکن‌های پوسته (تزریق از Theme Engine) */}
         <style id="theme-vars" dangerouslySetInnerHTML={{ __html: varsCss }} />
+        {/* داده‌های ساختاریافته Schema.org (قابل خاموش‌کردن از پنل سئو) */}
+        {s["seo.schema_org"] !== "false" && (
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org", "@type": "ClothingStore", name: storeName, description: s["seo.default_description"] ?? tagline,
+            telephone: s["header.phone"] ?? "", address: s["footer.address"] ?? "", email: s["footer.email"] ?? "",
+            sameAs: [s["footer.instagram"], s["footer.telegram"]].filter(Boolean),
+          }) }} />
+        )}
         {/* CSS سفارشی — قلب شخصی‌سازی پوسته */}
         {s["custom.css"] && <style id="custom-css" dangerouslySetInnerHTML={{ __html: s["custom.css"] }} />}
       </head>
@@ -147,9 +156,29 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         )}
         <StoreProvider>
           <DemoBar />
-          <Header userName={user?.name ?? null} isAdmin={user?.role === "admin" || demoOpen} />
+          <Header
+            userName={user?.name ?? null}
+            isAdmin={user?.role === "admin" || demoOpen}
+            nav={buildNav(bundle?.menus ?? [], "main")}
+            announcement={s["announcement.text"]}
+            phone={s["header.phone"]}
+          />
           <main>{children}</main>
-          <Footer storeName={storeName} tagline={tagline} />
+          <Footer
+            storeName={storeName}
+            tagline={tagline}
+            about={s["footer.about"]}
+            quickLinks={buildNav(bundle?.menus ?? [], "footer_quick").map((n) => ({ label: n.label, href: n.href }))}
+            serviceLinks={buildNav(bundle?.menus ?? [], "footer_service").map((n) => ({ label: n.label, href: n.href }))}
+            instagram={s["footer.instagram"]}
+            telegram={s["footer.telegram"]}
+            phone={s["header.phone"]}
+            copyright={s["footer.copyright"]}
+            showTrustBadges={s["footer.show_trust_badges"] !== "false"}
+          />
+          {(bundle?.widgets ?? []).filter((w) => w.enabled && w.type === "popup").slice(0, 1).map((w) => (
+            <PopupWidget key={w.id} id={w.id} config={w.config} />
+          ))}
         </StoreProvider>
         {/* JavaScript سفارشی — تزریق در پایان body */}
         {s["custom.js"] && <script id="custom-js" dangerouslySetInnerHTML={{ __html: s["custom.js"] }} />}

@@ -7,15 +7,15 @@
         <span><span style="display:block">Mini<em>Moda</em></span><span style="display:block;font-size:9px;font-weight:400;color:rgba(255,255,255,.6);direction:ltr;text-align:right">Kids &amp; Teens Fashion</span></span>
       </a>
       <h4 style="margin-top:10px">درباره مینی‌مودا</h4>
-      <p>فروشگاه اینترنتی پوشاک کودک و نوجوان — کیفیت و جدیدترین مدل‌ها با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.</p>
+      <p><?= e(themeGet('footer.about', 'فروشگاه اینترنتی پوشاک کودک و نوجوان — کیفیت و جدیدترین مدل‌ها با ضمانت اصالت کالا و ارسال سریع به سراسر ایران.')) ?></p>
     </div>
     <div class="f-col">
       <h4>دسترسی سریع</h4>
-      <a href="products.php?sort=sales">محصولات پرفروش</a><a href="products.php?offer=1">تخفیف‌های ویژه</a><a href="blog.php">مجله مد</a><a href="products.php?cat=formal">پرفروش‌های محبوب</a><a href="products.php?cat=shoes">کفش و کتانی</a>
+      <?php $fq = themeMenu('footer_quick'); if (!$fq) $fq = [['label'=>'محصولات پرفروش','href'=>'products.php?sort=sales'],['label'=>'تخفیف‌های ویژه','href'=>'products.php?offer=1'],['label'=>'مجله مد','href'=>'blog.php'],['label'=>'کفش و کتانی','href'=>'products.php?cat=shoes']]; foreach ($fq as $l): ?><a href="<?= e($l['href']) ?>"><?= e($l['label']) ?></a><?php endforeach; ?>
     </div>
     <div class="f-col">
       <h4>خدمات مشتریان</h4>
-      <a href="help.php#delivery">راهنمای خرید</a><a href="help.php#delivery">شیوه‌های ارسال</a><a href="account.php">پیگیری سفارش</a><a href="help.php#faq">سوالات متداول</a><a href="help.php#return">ضمانت بازگشت کالا</a>
+      <?php $fs = themeMenu('footer_service'); if (!$fs) $fs = [['label'=>'راهنمای خرید','href'=>'help.php#delivery'],['label'=>'پیگیری سفارش','href'=>'account.php'],['label'=>'سوالات متداول','href'=>'help.php#faq'],['label'=>'ضمانت بازگشت کالا','href'=>'help.php#return']]; foreach ($fs as $l): ?><a href="<?= e($l['href']) ?>"><?= e($l['label']) ?></a><?php endforeach; ?>
     </div>
     <div class="f-col">
       <h4>عضویت در خبرنامه</h4>
@@ -30,8 +30,8 @@
       </form>
       <?php endif; ?>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <a href="https://www.instagram.com/minimoda.ir" target="_blank" rel="noreferrer" aria-label="اینستاگرام" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;text-decoration:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8h.01"/><rect x="3" y="3" width="18" height="18" rx="5"/></svg></a>
-        <a href="https://t.me/minimoda_ir" target="_blank" rel="noreferrer" aria-label="تلگرام" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;text-decoration:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></a>
+        <a href="<?= e(themeGet('footer.instagram', 'https://www.instagram.com/minimoda.ir')) ?>" target="_blank" rel="noreferrer" aria-label="اینستاگرام" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;text-decoration:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8h.01"/><rect x="3" y="3" width="18" height="18" rx="5"/></svg></a>
+        <a href="<?= e(themeGet('footer.telegram', 'https://t.me/minimoda_ir')) ?>" target="_blank" rel="noreferrer" aria-label="تلگرام" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;text-decoration:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></a>
         <a href="tel:02188766554" aria-label="تلفن" style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;color:#fff;text-decoration:none"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
       </div>
     </div>
@@ -39,7 +39,7 @@
 
   <div class="wrap footer-bottom">
     <p><a href="help.php#faq" style="color:inherit;text-decoration:none">قوانین و مقررات</a> &nbsp;|&nbsp; <a href="help.php" style="color:inherit;text-decoration:none">حریم خصوصی</a></p>
-    <p>© ۱۴۰۴ — کلیه حقوق محفوظ است — فروشگاه مینی‌مودا</p>
+    <p><?= e(themeGet('footer.copyright', '© ۱۴۰۴ — کلیه حقوق محفوظ است — فروشگاه مینی‌مودا')) ?></p>
   </div>
 </footer>
 
@@ -50,6 +50,13 @@
   <?php endforeach; ?>
 </div>
 
+<?php foreach (themeWidgets('popup') as $w): $c = json_decode($w['config'], true) ?: []; ?>
+<div class="mm-popup" id="mmPopup<?= (int) $w['id'] ?>" data-delay="<?= (int) ($c['delay'] ?? 4) ?>" data-once="<?= !empty($c['once']) ? 1 : 0 ?>" hidden>
+  <div class="mm-popup-bg" data-close></div>
+  <div class="mm-popup-box"><button class="mm-popup-x" data-close aria-label="بستن">×</button><div class="mm-popup-ic">🎁</div><h2><?= e($c['heading'] ?? '') ?></h2><p><?= e($c['body'] ?? '') ?></p><a class="btn btn-primary" href="<?= e($c['href'] ?? 'products.php') ?>" style="height:44px;border-radius:99px;margin-top:10px"><?= e($c['cta'] ?? 'مشاهده') ?></a></div>
+</div>
+<?php break; endforeach; ?>
 <script src="assets/app.js" defer></script>
+<?php if (($cj = themeGet('custom.js')) !== ''): ?><script id="custom-js"><?= $cj ?></script><?php endif; ?>
 </body>
 </html>

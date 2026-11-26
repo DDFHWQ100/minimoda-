@@ -4,7 +4,19 @@ if (!isset($pageTitle) || $pageTitle === '') { $pageTitle = 'مینی‌مودا
 $currentUser = currentUser();
 $cartN = cartCount();
 $cartTotalsCache = $cartN > 0 ? cartTotals() : ['total' => 0];
-$nav = [
+// منو از دیتابیس (مدیریت از پنل قالب) — در نبود جدول، منوی پیش‌فرض
+$dbMenu = themeMenu('main');
+$nav = [];
+foreach ($dbMenu as $menuRow) {
+    if (!is_array($menuRow)) { continue; }
+    $nav[] = [
+        'label' => (string) ($menuRow['label'] ?? ''),
+        'href'  => (string) ($menuRow['href'] ?? 'index.php'),
+        'home'  => !empty($menuRow['highlight']),
+        'sub'   => is_array($menuRow['sub'] ?? null) ? $menuRow['sub'] : [],
+    ];
+}
+if (!$nav) $nav = [
     ['label' => 'خانه', 'href' => 'index.php', 'home' => true],
     ['label' => 'بچگانه', 'href' => 'products.php?cat=kids'],
     ['label' => 'کودکان', 'href' => 'products.php?cat=boys'],
@@ -25,6 +37,14 @@ $nav = [
 ];
 $activeCat = $_GET['cat'] ?? '';
 $isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
+$storeName = themeGet('store.name', 'مینی‌مودا');
+$storeTagline = themeGet('store.tagline', 'Kids & Teens Fashion');
+if (themeBool('maintenance.enabled') && !isAdmin()) {
+    http_response_code(503);
+    echo '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta http-equiv="refresh" content="30"><title>' . e($storeName) . ' | در حال به‌روزرسانی</title><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;900&display=swap" rel="stylesheet"></head>'
+       . '<body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#15305a;color:#fff;font-family:Vazirmatn,Tahoma;text-align:center;padding:24px"><div><div style="width:84px;height:84px;border-radius:24px;background:linear-gradient(135deg,#fcd34d,#f59e0b);margin:0 auto 18px"></div><h1 style="font-size:26px">' . e($storeName) . ' در حال به‌روزرسانی است</h1><p style="opacity:.8;line-height:2">' . e(themeGet('maintenance.message')) . '</p><a href="auth.php?action=login" style="color:#fcd34d">ورود مدیران</a></div></body></html>';
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -39,13 +59,20 @@ $isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/style.css">
+<meta name="description" content="<?= e(themeGet('seo.default_description', 'خرید آنلاین لباس کودک و نوجوان')) ?>">
+<meta property="og:title" content="<?= e($pageTitle) ?>"><meta property="og:image" content="<?= e(themeGet('seo.og_image', 'assets/images/ref-hero.jpg')) ?>">
+<?php if (themeBool('seo.schema_org', true)): ?><script type="application/ld+json"><?= json_encode(['@context' => 'https://schema.org', '@type' => 'ClothingStore', 'name' => $storeName, 'description' => themeGet('seo.default_description'), 'telephone' => themeGet('header.phone'), 'address' => themeGet('footer.address'), 'email' => themeGet('footer.email')], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script><?php endif; ?>
+<style id="theme-vars"><?= themeCssVars() ?></style>
+<?php if (($cc = themeGet('custom.css')) !== ''): ?><style id="custom-css"><?= $cc ?></style><?php endif; ?>
+<?= themeGet('custom.head') ?>
 </head>
 <body>
 
 <!-- نوار بالایی سرمه‌ای -->
+<?php if (themeBool('announcement.enabled', true)): ?>
 <div class="topbar">
   <div class="wrap topbar-in">
-    <span class="topbar-highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 8h4l4 4v5a1 1 0 0 1-1 1h-2"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg> تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی</span>
+    <span class="topbar-highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 8h4l4 4v5a1 1 0 0 1-1 1h-2"/><circle cx="7.5" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg> <?= e(themeGet('announcement.text', 'تخفیف ویژه تا ۷۰٪ در جشنواره تابستانی')) ?></span>
     <span class="topbar-side">
       <a href="help.php#contact">پشتیبانی مشتریان</a>
       <span class="sep">|</span>
@@ -55,6 +82,7 @@ $isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
     </span>
   </div>
 </div>
+<?php endif; ?>
 
 <!-- سربرگ اصلی -->
 <header class="site-header" id="siteHeader">
@@ -63,7 +91,7 @@ $isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
 
     <a class="logo" href="index.php">
       <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#1b3a6b" stroke-width="2.2" stroke-linejoin="round"><path d="M3 8l4.5 4L12 4l4.5 8L21 8l-1.8 11H4.8L3 8z"/></svg></span>
-      <span class="logo-text"><b>Mini<em>Moda</em></b><small>Kids &amp; Teens Fashion</small></span>
+      <span class="logo-text"><b><?= $storeName === 'مینی‌مودا' ? 'Mini<em>Moda</em>' : e($storeName) ?></b><small><?= e($storeTagline) ?></small></span>
     </a>
 
     <form class="search" action="products.php" method="get" role="search">
@@ -95,7 +123,7 @@ $isHome = basename($_SERVER['SCRIPT_NAME'] ?? '') === 'index.php';
         </div>
       <?php endforeach; ?>
       <a class="nav-hot" href="products.php?offer=1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg> حراج ویژه</a>
-      <?php if ($currentUser && $currentUser['role'] === 'admin'): ?><a class="nav-admin" href="admin.php">پنل مدیریت</a><?php endif; ?>
+      <?php if ($currentUser && $currentUser['role'] === 'admin'): ?><a class="nav-admin" href="admin.php">پنل مدیریت</a><a class="nav-admin" href="admin/index.php">🎨 قالب</a><?php endif; ?>
     </div>
   </nav>
 </header>
